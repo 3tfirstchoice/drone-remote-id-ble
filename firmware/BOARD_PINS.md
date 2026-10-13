@@ -28,3 +28,5 @@ Goi OhStem khong dinh nghia LED_BUILTIN / RGB_BUILTIN / PIN_NEOPIXEL.
 - Flash: 16 MB (16777216 byte)
 - PSRAM: 8 MB OPI (8386295 byte)
 - Cong COM khi cam USB: COM8 (co the doi may)
+## Dia chi BLE (do bang nRF Connect, 13/10/2026)
+- F0:F5:BD:45:1B:0D
