@@ -222,6 +222,8 @@ void init2(char *ssid,int ssid_length,uint8_t *WiFi_mac_addr,uint8_t wifi_channe
   power    = esp_ble_tx_power_get(ESP_BLE_PWR_TYPE_DEFAULT);
   power_db = 3 * ((int) power - 4); 
 
+  Serial.printf("[BLE] init ok, tx power level enum=%d\n", (int) power);   // PATCH #3
+
 #endif
 
   return;
@@ -304,21 +306,33 @@ int transmit_wifi2(uint8_t *buffer,int length) {
  *
  */
 
+// PATCH #2: dem goi da phat va loi BLE; sketch doc qua extern
+uint32_t ble_tx_cnt  = 0;
+uint32_t ble_err_cnt = 0;
+
 int transmit_ble2(uint8_t *ble_message,int length) {
 
   esp_err_t  ble_status = 0;
 
 #if ID_OD_BT
 
-  static int advertising = 0; 
+  static int advertising = 0;
 
   if (advertising) {
-
-    ble_status = esp_ble_gap_stop_advertising();
+    esp_ble_gap_stop_advertising();
   }
 
-  ble_status = esp_ble_gap_config_adv_data_raw(ble_message,length); 
+  ble_status = esp_ble_gap_config_adv_data_raw(ble_message,length);
+  if (ble_status != ESP_OK) {
+    if ((ble_err_cnt++ % 50) == 0) Serial.printf("[BLE] adv_data_raw err=0x%x\n", ble_status);
+  }
+
   ble_status = esp_ble_gap_start_advertising(&advParams);
+  if (ble_status != ESP_OK) {
+    if ((ble_err_cnt++ % 50) == 0) Serial.printf("[BLE] start_adv err=0x%x\n", ble_status);
+  } else {
+    ble_tx_cnt++;
+  }
 
   advertising = 1;
 

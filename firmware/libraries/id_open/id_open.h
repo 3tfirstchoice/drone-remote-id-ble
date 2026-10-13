@@ -19,8 +19,8 @@
 #if defined(ARDUINO_ARCH_ESP32)
 
 #define ID_OD_WIFI_NAN    0
-#define ID_OD_WIFI_BEACON 1
-#define ID_OD_BT          0        // ASTM F3411-19 / ASD-STAN 4709-002.
+#define ID_OD_WIFI_BEACON 0        // PATCH #1: tat Wi-Fi beacon
+#define ID_OD_BT          1        // PATCH #1: bat BLE Legacy Advertising
 
 #define USE_BEACON_FUNC   0
 #define ESP32_WIFI_OPTION 0
