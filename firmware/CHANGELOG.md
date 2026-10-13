@@ -21,3 +21,11 @@
 - T03 dat: lat tang deu 0.0000462 do/giay, lon khong doi, speed_kn=10, heading=0
 - T04 dat: heading 90, 0, 270, 180 lap lai 2 vong, diem cuoi vong trung diem dau
 - Luu y: toc do 10 kn = 5.144 m/s, ODID ma hoa buoc 0.25 m/s nen ung dung co the hien 5.0 hoac 5.25 m/s
+
+
+## fw-v0.3-tested (2026-10-13)
+- Patch #5 (id_open.cpp): last_msecs 2000 -> 300; BOOT_DELAY_MS 2000 -> 500
+- Thoi gian tu luc chip khoi dong den goi BLE dau tien (first_tx): 2444 ms -> 943 ms
+- Firmware in them dong `# first_tx ms=N`; them tools/t05_measure.ps1
+- T05 dat (khoi phuc sau khi mat nguon), T06 dat (phat lien tuc khi dong/mo app, err=0)
+- T07 (chay 30 phut) va T08 (cu ly) khong thuc hien
