@@ -412,7 +412,7 @@ int ID_OpenDrone::transmit(struct UTM_data *utm_data) {
   uint32_t         msecs;
   time_t           secs = 0;
   static int       phase = 0;
-  static uint32_t  last_msecs = 2000;
+  static uint32_t  last_msecs = 300;   // PATCH #5: goi dau sau ~0.3 s thay vi 2 s
 
   //
 
