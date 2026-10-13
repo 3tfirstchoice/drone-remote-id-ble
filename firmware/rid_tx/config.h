@@ -1,7 +1,7 @@
 // config.h - moi hang so cua firmware rid_tx dat o day
 #pragma once
 
-#define FW_VERSION       "0.2.0"
+#define FW_VERSION       "0.3.0"
 
 // --- Nguon du lieu: 0 = gia lap tu waypoints.h, 1 = GPS NEO-6M (giai doan 2) ---
 #define USE_GPS          0
