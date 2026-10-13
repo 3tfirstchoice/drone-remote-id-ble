@@ -19,7 +19,7 @@
 
 // --- Nhip va thoi gian ---
 #define DATA_PERIOD_MS   1000              // cap nhat du lieu + in log 1 Hz
-#define BOOT_DELAY_MS    2000              // USB native: cho may tinh nhan cong COM
+#define BOOT_DELAY_MS    500               // USB native: cho may tinh nhan cong COM
 #define MOCK_SATS        10                // phai >= 7, neu khong thu vien khong phat Location
 
 // --- Chan (xem BOARD_PINS.md) ---

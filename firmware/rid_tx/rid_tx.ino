@@ -13,7 +13,7 @@ ID_OpenDrone   squitter;
 UTM_parameters utm_parameters;
 UTM_data       utm_data;
 
-extern uint32_t ble_err_cnt;   // PATCH #2
+extern uint32_t ble_err_cnt, ble_tx_cnt;   // PATCH #2
 
 // Dien ngay gio UTC tu dong ho he thong vao UTM_data
 static void fill_time(UTM_data *d) {
@@ -91,6 +91,11 @@ void loop() {
   static uint32_t last_err  = 0;
 
   handle_serial();
+  static bool first_tx_done = false;
+  if (!first_tx_done && ble_tx_cnt > 0) {
+    first_tx_done = true;
+    Serial.printf("# first_tx ms=%lu\n", (unsigned long) millis());
+  }
 #if USE_GPS
   gps_poll();                          // doc UART GPS lien tuc
 #endif
