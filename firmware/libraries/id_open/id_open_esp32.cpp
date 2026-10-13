@@ -110,7 +110,7 @@ void construct2() {
 
   advParams.adv_int_min       = 0x0020;
   advParams.adv_int_max       = 0x0040;
-  advParams.adv_type          = ADV_TYPE_IND;
+  advParams.adv_type          = ADV_TYPE_NONCONN_IND;   // PATCH #4: non-connectable
   advParams.own_addr_type     = BLE_ADDR_TYPE_PUBLIC;
   advParams.channel_map       = ADV_CHNL_ALL;
   advParams.adv_filter_policy = ADV_FILTER_ALLOW_SCAN_ANY_CON_ANY;
