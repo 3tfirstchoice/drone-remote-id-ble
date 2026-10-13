@@ -8,6 +8,7 @@
 - Tools: USB CDC On Boot = Enabled, USB Mode = Hardware CDC and JTAG, Flash Size = 16MB, PSRAM = OPI PSRAM, Upload Speed = 921600 (115200 neu loi)
 - Nap code: neu khong ket noi duoc, giu BOOT, bam RESET, tha RESET, tha BOOT, roi Upload
 - Sketchbook location: <repo>\firmware
+
 ## lib_test (Phan B)
 - Board: ESP32S3 Dev Module, core esp32 2.0.17, Partition Scheme Default 4MB with spiffs
 - FQBN: esp32:esp32:esp32s3:CDCOnBoot=cdc,FlashSize=16M,PSRAM=opi
