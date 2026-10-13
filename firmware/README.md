@@ -24,6 +24,7 @@ Ba mang: WP_STATIONARY (60 diem), WP_STRAIGHT (30 diem, huong Bac, 10 kn), WP_RE
 
 - 115200 baud, USB CDC, moi dong ket thuc bang `\n`
 - Dong bat dau `#` la ghi chu; `H,` la header; `D,` la du lieu (1 dong/giay)
+- Dong `# first_tx ms=N` in 1 lan sau khi khoi dong: thoi diem (ms ke tu luc chip khoi dong) goi BLE dau tien duoc phat
 - Header: `H,ms,utc,scn,idx,lat,lon,alt_msl,alt_agl,speed_kn,heading,sats,tx,err,heap`
 - `scn`: 0 dung yen, 1 bay thang, 2 chu nhat, -1 GPS
 - Cong COM co the bien mat vai giay moi lan board reset
