@@ -1,0 +1,26 @@
+# Arduino / build
+build/
+*.bin
+*.elf
+*.map
+*.hex
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Android
+mobile/**/build/
+mobile/**/.gradle/
+local.properties
+*.apk
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+*.tmp
