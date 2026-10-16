@@ -11,11 +11,11 @@
 #define OPERATOR_ID      "LAB-OPERATOR-01"
 #define SELF_ID_TEXT     "LAB SIMULATION"
 
-// --- Vi tri nguoi dieu khien (home) va gio bat dau ---
+// --- Vi tri nguoi dieu khien (home) ---
 #define HOME_LAT         10.7725
 #define HOME_LON         106.6578
 #define HOME_ALT_MSL     10.0f
-#define SCENARIO_EPOCH   1791849600UL      // 2026-10-13 00:00:00 UTC
+// SCENARIO_EPOCH (gio bat dau gia lap) nam trong waypoints.h, do data/generate_mock_data.py sinh
 
 // --- Nhip va thoi gian ---
 #define DATA_PERIOD_MS   1000              // cap nhat du lieu + in log 1 Hz

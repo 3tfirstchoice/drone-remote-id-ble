@@ -1,9 +1,12 @@
-// waypoints.h - SINH TU DONG boi tools/gen_waypoints_tmp.py, KHONG sua tay
+// waypoints.h - SINH TU DONG boi data/generate_mock_data.py, KHONG sua tay
 // Moi phan tu = 1 giay. lat/lon don vi 1e-7 do, do cao don vi 0.1 m,
 // speed_kn la hai ly (knot), heading la do (0 = Bac, 90 = Dong).
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+
+// Gio bat dau gia lap (Unix, UTC) = thoi diem chay script, trung moc CSV
+#define SCENARIO_EPOCH   1792122556UL      // 2026-10-16 03:49:16 UTC
 
 typedef struct {
   int32_t  lat_e7, lon_e7;
@@ -151,7 +154,5 @@ static const waypoint_t WP_RECTANGLE[] = {
   { 107726386, 1066578000, 600, 500, 10, 180 },
   { 107725924, 1066578000, 600, 500, 10, 180 },
   { 107725462, 1066578000, 600, 500, 10, 180 },
-  { 107725000, 1066578000, 600, 500, 10, 180 },
 };
 #define WP_RECTANGLE_LEN (sizeof(WP_RECTANGLE) / sizeof(WP_RECTANGLE[0]))
-
