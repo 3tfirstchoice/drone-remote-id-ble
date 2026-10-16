@@ -9,7 +9,8 @@ Huong dan nap day du, loi thuong gap: se bo sung o ban phat hanh v1.0.
 
 ### 1. waypoints.h
 
-Moi phan tu la 1 diem, 1 giay mot diem. File duoc sinh boi `tools/gen_waypoints_tmp.py`, khong sua tay.
+Moi phan tu la 1 diem, 1 giay mot diem. File duoc sinh boi `data/generate_mock_data.py` (Task 2), khong sua tay. Sinh lai: `python data/generate_mock_data.py` o thu muc goc repo, roi nap lai firmware.
+File con chua `#define SCENARIO_EPOCH` = gio bat dau gia lap (thoi diem chay script, trung moc thoi gian trong CSV cua Task 2).
 
     typedef struct {
       int32_t  lat_e7, lon_e7;        // do * 1e7
@@ -18,7 +19,7 @@ Moi phan tu la 1 diem, 1 giay mot diem. File duoc sinh boi `tools/gen_waypoints_
       uint16_t heading_deg;            // 0 = Bac, 90 = Dong
     } waypoint_t;
 
-Ba mang: WP_STATIONARY (60 diem), WP_STRAIGHT (30 diem, huong Bac, 10 kn), WP_RECTANGLE (41 diem, 4 canh x 10 giay, dong-bac-tay-nam, diem cuoi = diem dau). Moi mang co macro `<TEN>_LEN`.
+Ba mang: WP_STATIONARY (60 diem), WP_STRAIGHT (30 diem, huong Bac, 10 kn), WP_RECTANGLE (40 diem, 4 canh x 10 giay, dong-bac-tay-nam; sau diem 39 firmware quay ve diem 0 = diem xuat phat, vong lap 40 giay). Moi mang co macro `<TEN>_LEN`.
 
 ### 2. Log Serial
 

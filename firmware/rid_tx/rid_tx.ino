@@ -2,6 +2,7 @@
 // Giai doan 1: du lieu gia lap tu waypoints.h. Giai doan 2: GPS NEO-6M (USE_GPS 1).
 #include "id_open.h"
 #include "config.h"
+#include "waypoints.h"      // SCENARIO_EPOCH
 #include "mock_source.h"
 #include "telemetry.h"
 #include "status_led.h"
