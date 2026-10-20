@@ -40,3 +40,12 @@
 - Operator ID: byte phat dung; canh bao cua Drone Scanner den tu kiem tra dinh dang o phia app (xem README)
 - SCENARIO_EPOCH co dinh theo lan sinh waypoints (co chu y); che do GPS dung gio GPS
 - Chua kiem chung tren board that: bien dich Arduino IDE, fix ngoai troi
+
+## fw-v0.4.1-cleanup (2026-10-20)
+- Khong doi hanh vi phat BLE va dinh dang dong log `H,` / `D,` (test xac nhan). Doi chu: dong canh bao BLE ghi "5000 ms", lenh `?` theo che do
+- `rid_tx.ino`: lua chon gia lap / GPS gom vao 1 muc (`source_begin/poll/step/command`), `setup()`/`loop()` khong con `#if`; tach `report_first_tx()`, `ble_healthy()`; lenh `?` chi liet ke lenh cua che do dang chay; nguong canh bao BLE dua vao config.h (`FIRST_TX_WARN_MS`)
+- `gps_source.cpp`: ham `is_fresh()` thay 6 cho kiem tra lap; bo xu ly HDOP/VDOP vi thu vien id_open khong doc 2 truong nay
+- `mock_source`: include `utm.h` thay vi ca thu vien id_open; bo ham `mock_name()` khong dung; `status_led`: dung enum thay so 0/1/2
+- `tools/gps_passthrough`: gom doan ghep cau NMEA lap 2 lan thanh `LineReader`; lenh `r` xoa ca so lieu GSV cu
+- `firmware/test`: them test cho chinh `rid_tx.ino` o ca 2 che do (build 2 lan); gom bien gia lap vao `stubs/stubs.cpp`, cau NMEA vao `nmea_fixture.h`; kiem tra 2 ban waypoints.h giong nhau va cu phap gps_passthrough; da thu pha code co chu y de xac nhan test bat duoc loi
+- Them `tools/README.md`, muc "Cau truc code" trong README; bo cac file .gitkeep thua

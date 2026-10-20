@@ -3,7 +3,37 @@
 Firmware `rid_tx` phat goi Remote ID (ASTM F3411 / OpenDroneID) bang BLE Legacy Advertising, Service Data UUID 0xFFFA.
 Giai doan 1 phat du lieu gia lap tu `rid_tx/waypoints.h`. Giai doan 2 (USE_GPS 1) phat du lieu tu GPS that (M5Stack GPS/BDS Unit v1.1, AT6668).
 
+Moi truong build: `firmware-environment.md`. Chan cua board: `BOARD_PINS.md`. Cac sua doi thu vien: `PATCHES.md`.
 Huong dan nap day du, loi thuong gap: se bo sung o ban phat hanh v1.0.
+
+## Cau truc code
+
+    firmware/
+      rid_tx/                 firmware chinh (mo rid_tx.ino trong Arduino IDE)
+        rid_tx.ino            noi cac module: setup(), loop(), lenh Serial, chon nguon du lieu
+        config.h              MOI hang so (ID, home, chan, GPS, nhip) + kiem tra luc bien dich
+        mock_source.h/.cpp    nguon gia lap: doc 3 kich ban trong waypoints.h
+        gps_source.h/.cpp     nguon GPS that: doc NMEA qua UART1 bang TinyGPSPlus
+        waypoints.h           du lieu kich ban, SINH TU DONG boi data/generate_mock_data.py
+        telemetry.h/.cpp      log CSV 1 dong/giay ra Serial
+        status_led.h/.cpp     den xanh GPIO48, bao trang thai bang so lan nhay
+        ble_stats.h           khai bao bo dem goi BLE (dinh nghia trong thu vien, PATCH #2)
+      libraries/              thu vien id_open + utm (da va, xem PATCHES.md)
+      test/                   test tren may tinh, khong can board (bash firmware/test/run_tests.sh)
+      tools/                  sketch chan doan va script ghi log (xem tools/README.md)
+      evidence/               log va ghi chu ket qua kiem thu T02-T06
+
+Luong du lieu (moi module chi lam 1 viec, chi `rid_tx.ino` biet ca he thong):
+
+    waypoints.h --> mock_source --+                      +--> id_open transmit()  --> BLE, 1 goi / 75 ms
+                    (USE_GPS 0)   |   1 lan / giay        |    (Location, System, Basic ID, Self ID, Operator ID)
+                                  +--> UTM_data utm_data -+
+    module GPS --> gps_source ----+   (phieu du lieu      +--> telemetry_line()   --> Serial, 1 dong CSV / giay
+      (UART1)      (USE_GPS 1)        dung chung)
+
+- `UTM_data` (khai bao trong `libraries/utm/utm.h`) la cau truc ma thu vien id_open doc de dong goi. Nguon du lieu dien vi tri, toc do, huong, so ve tinh; `rid_tx.ino` dien ngay gio (`fill_time`) va vi tri nguoi dieu khien (`base_*`).
+- Lua chon gia lap / GPS chi nam o 1 cho: muc "nguon du lieu" trong `rid_tx.ino` (4 ham `source_begin`, `source_poll`, `source_step`, `source_command`). `setup()` va `loop()` khong co `#if`.
+- Thu vien id_open khong doc `hdop_s` / `vdop_s` (do chinh xac ngang co dinh 10 m), nen firmware khong dien 2 truong nay.
 
 ## Giao dien
 
@@ -23,9 +53,10 @@ Ba mang: WP_STATIONARY (60 diem), WP_STRAIGHT (30 diem, huong Bac, 10 kn), WP_RE
 
 ### 2. Log Serial
 
-- 115200 baud, USB CDC, moi dong ket thuc bang `\n`
+- 115200 baud, USB CDC, moi dong ket thuc bang `\n` (rieng dong header `H,` ket thuc bang `\r\n`)
 - Dong bat dau `#` la ghi chu; `H,` la header; `D,` la du lieu (1 dong/giay)
-- Dong `# first_tx ms=N` in 1 lan sau khi khoi dong: thoi diem (ms ke tu luc chip khoi dong) goi BLE dau tien duoc phat
+- Luc khoi dong: `# rid_tx boot ...`, `# identity uav=... operator=... self_id=...` (ID dang phat), roi header
+- Dong `# first_tx ms=N` in 1 lan: thoi diem (ms ke tu luc chip khoi dong) goi BLE dau tien duoc phat. Neu sau 5 s van chua co goi nao thi in 1 dong `# CANH BAO ...`
 - Header: `H,ms,utc,scn,idx,lat,lon,alt_msl,alt_agl,speed_kn,heading,sats,tx,err,heap`
 - `scn`: 0 dung yen, 1 bay thang, 2 chu nhat, -1 GPS
 - Cong COM co the bien mat vai giay moi lan board reset
@@ -33,15 +64,15 @@ Ba mang: WP_STATIONARY (60 diem), WP_STRAIGHT (30 diem, huong Bac, 10 kn), WP_RE
 
 ### 3. Lenh Serial (1 ky tu)
 
-| Lenh | Y nghia |
-|---|---|
-| 1 | kich ban dung yen |
-| 2 | kich ban bay thang |
-| 3 | kich ban hinh chu nhat |
-| r | chay lai kich ban hien tai |
-| h | in header |
-| v | in phien ban |
-| ? | tro giup |
+| Lenh | Y nghia | Che do |
+|---|---|---|
+| 1 | kich ban dung yen | chi gia lap |
+| 2 | kich ban bay thang | chi gia lap |
+| 3 | kich ban hinh chu nhat | chi gia lap |
+| r | chay lai kich ban hien tai | chi gia lap |
+| h | in header | ca hai |
+| v | in phien ban | ca hai |
+| ? | tro giup (liet ke lenh cua che do dang chay) | ca hai |
 
 ### 4. Den xanh (GPIO48)
 
@@ -78,10 +109,20 @@ Hanh vi chinh (`rid_tx/gps_source.cpp`):
 
     bash firmware/test/run_tests.sh
 
-Chay logic GPS (voi TinyGPSPlus that), dinh dang log, den bao, waypoints va byte Operator ID tren may tinh bang stub Arduino. Khong thay the viec nap board that: chua kiem chung bien dich Arduino IDE, BLE va fix ngoai troi.
+Can g++, gcc, git (lan dau tai TinyGPSPlus 1.1.0 ve `test/.deps/`). Script build va chay:
+
+| Chuong trinh | Kiem tra |
+|---|---|
+| `modules` | tung module: gps_source (voi TinyGPSPlus that), telemetry, status_led, mock_source + waypoints.h, byte Operator ID (voi opendroneid.c that) |
+| `rid_tx_mock` | `rid_tx.ino` voi USE_GPS 0: setup, 1 dong log/giay, gio theo SCENARIO_EPOCH, lenh Serial, canh bao BLE, den |
+| `rid_tx_gps` | `rid_tx.ino` voi USE_GPS 1: chua fix -> co fix (chot home, dong bo gio) -> mat fix |
+
+Them 2 kiem tra tinh: 2 ban `waypoints.h` (data/ va firmware/rid_tx/) giong het nhau; `tools/gps_passthrough` dung cu phap.
+
+Cau truc `test/`: `stubs/` (Arduino.h, id_open.h gia lap va dinh nghia bien gia lap trong stubs.cpp), `check.h` (macro CHECK), `nmea_fixture.h` (tao cau NMEA), moi file `test_*.cpp` ung voi 1 module.
+Test khong thay the viec nap board that: chua kiem chung bien dich bang Arduino IDE, BLE that va fix ngoai troi.
 
 ## Cau hinh va luu y
 
 - `config.h` co static_assert kiem tra ID (toi da 20 ky tu), toa do home, `MOCK_SATS` >= 7: sai thi bao loi luc bien dich.
-- Luc khoi dong firmware in `# identity ...` (ID dang phat); sau 5 s ma chua co goi BLE nao se in `# CANH BAO`.
 - Operator ID `LAB-OPERATOR-01` duoc ma hoa dung (giu nguyen dau gach, da test). App Drone Scanner hien "LABOPERATOR01" kem canh bao vi no kiem tra dinh dang dang ky EU, khong phai loi firmware. Muon het canh bao thi doi `OPERATOR_ID` sang dinh dang ma app chap nhan (chua kiem chung).
