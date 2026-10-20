@@ -38,7 +38,6 @@ struct StubSerial {
   uint32_t    baud = 0, cfg = 0; int rx_pin = -1, tx_pin = -1; size_t rxbuf = 0;
   std::string out;              // thu tu ra Serial.print
   void   begin(uint32_t b, uint32_t c = SERIAL_8N1, int r = -1, int t = -1) { baud = b; cfg = c; rx_pin = r; tx_pin = t; }
-  void   begin(uint32_t b) { baud = b; }
   size_t setRxBufferSize(size_t n) { rxbuf = n; return n; }
   void   end() {}
   int    available() { return (int) (rx.size() - pos); }
@@ -46,10 +45,11 @@ struct StubSerial {
   void   feed(const std::string &s) { rx += s; }
   void   clear() { rx.clear(); pos = 0; out.clear(); }
   void   print(const char *s) { out += s; }
-  void   println(const char *s) { out += s; out += "\r\n"; }
+  void   println(const char *s = "") { out += s; out += "\r\n"; }
   void   printf(const char *f, ...) { char b[512]; va_list a; va_start(a, f); vsnprintf(b, sizeof b, f, a); va_end(a); out += b; }
   operator bool() const { return true; }
 };
 extern StubSerial Serial, Serial1;
 struct StubESP { uint32_t getFreeHeap() { return 265600; } };
 extern StubESP ESP;
+inline int esp_reset_reason() { return 1; }   // 1 = ESP_RST_POWERON

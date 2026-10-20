@@ -69,7 +69,8 @@ static void test_rectangle_legs_and_closure(void) {
 static void test_mock_straight_stops_at_end(void) {
   Serial.clear();
   mock_select(1);
-  CHECK_STR(mock_name(), "straight");
+  CHECK(mock_scenario() == 1);
+  CHECK(Serial.out == "# scenario=1 name=straight len=30\n");
   UTM_data d; memset(&d, 0, sizeof d);
   for (int i = 0; i < 30; i++) {
     CHECK(mock_index() == (size_t) i);
@@ -113,7 +114,7 @@ static void test_mock_select_invalid_ignored(void) {
   mock_select(-1);
   CHECK(mock_scenario() == 1);
   mock_select(0);
-  CHECK_STR(mock_name(), "stationary");
+  CHECK(mock_scenario() == 0);
 }
 
 void run_mock_waypoint_tests(void) {

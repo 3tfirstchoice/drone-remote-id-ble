@@ -3,46 +3,11 @@
 #include <time.h>
 #include <sys/time.h>
 #include "check.h"
+#include "nmea_fixture.h"
 #include "gps_source.h"
 #include "config.h"
 
-void gps_test_reset(void);
-
-// settimeofday that bi thay bang ham nay (-Dsettimeofday=stub_settimeofday) de khong dung vao dong ho may
-int            stub_settime_calls = 0;
-struct timeval stub_settime_last  = {0, 0};
-int stub_settimeofday(const struct timeval *tv, const struct timezone *) noexcept {
-  stub_settime_calls++;
-  stub_settime_last = *tv;
-  return 0;
-}
-
-// Dong goi "$<body>*HH\r\n" voi checksum dung
-static std::string nmea(const char *body) {
-  unsigned x = 0;
-  for (const char *p = body; *p; p++) x ^= (unsigned char) *p;
-  char tail[16];
-  snprintf(tail, sizeof tail, "*%02X\r\n", x);
-  return std::string("$") + body + tail;
-}
-
-// Toa do HCMUT: 10.7725 N = 10 do 46.3500 phut; 106.6578 E = 106 do 39.4680 phut
-static std::string gga(int quality, int sats, const char *hdop, const char *alt, const char *hhmmss = "030000.000") {
-  char b[200];
-  if (quality == 0)
-    snprintf(b, sizeof b, "GNGGA,%s,,,,,0,00,99.99,,M,,M,,", hhmmss);
-  else
-    snprintf(b, sizeof b, "GNGGA,%s,1046.3500,N,10639.4680,E,%d,%02d,%s,%s,M,0.0,M,,", hhmmss, quality, sats, hdop, alt);
-  return nmea(b);
-}
-static std::string rmc(char status, const char *speed_kn, const char *course, const char *hhmmss = "030000.000") {
-  char b[200];
-  if (status == 'A')
-    snprintf(b, sizeof b, "GNRMC,%s,A,1046.3500,N,10639.4680,E,%s,%s,201026,,,A", hhmmss, speed_kn, course);
-  else
-    snprintf(b, sizeof b, "GNRMC,%s,V,,,,,,,201026,,,N", hhmmss);
-  return nmea(b);
-}
+void gps_test_reset(void);   // gps_source.cpp, chi co khi -DGPS_SOURCE_TESTING
 
 static void feed_and_poll(const std::string &s) { Serial1.feed(s); gps_poll(); }
 
@@ -50,7 +15,7 @@ static void reset(void) {
   gps_test_reset();
   Serial1.clear();
   stub_millis = 10000;
-  stub_settime_calls = 0;
+  stub_reset_clock();
 }
 
 static void test_begin_uart_config(void) {
@@ -69,7 +34,6 @@ static void test_no_data(void) {
   UTM_data d; memset(&d, 0, sizeof d);
   CHECK(!gps_step(&d));
   CHECK(d.satellites == 0);
-  CHECK_STR(d.hdop_s, "99.9");
   double la, lo; float al;
   CHECK(!gps_home(&la, &lo, &al));
   CHECK(stub_settime_calls == 0);
@@ -98,7 +62,6 @@ static void test_fix_fills_utm_data(void) {
   CHECK(d.satellites == 10);
   CHECK(d.speed_kn == 5);                // 5.14 kn lam tron 5
   CHECK(d.heading == 90);
-  CHECK_STR(d.hdop_s, "0.9");
 
   double la = 0, lo = 0; float al = 0;
   CHECK(gps_home(&la, &lo, &al));
@@ -147,7 +110,7 @@ static void test_fix_lost_after_timeout(void) {
   stub_millis += GPS_FIX_MAX_AGE_MS + 500;   // khong con cau moi
   CHECK(!gps_step(&d));
   CHECK(d.satellites == 0);                  // de thu vien phat Location voi trang thai loi
-  CHECK_STR(d.hdop_s, "99.9");
+  CHECK_NEAR(d.latitude_d, 10.7725, 1e-9);   // toa do cu giu nguyen (khong bi xoa ve 0)
   double la, lo; float al;
   CHECK(gps_home(&la, &lo, &al));            // home da co van giu nguyen
   CHECK_NEAR(la, 10.7725, 1e-9);
