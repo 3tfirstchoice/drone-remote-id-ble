@@ -13,6 +13,7 @@ void gps_poll(void);
 // Dien UTM_data tu cau NMEA moi nhat. Goi 1 lan moi DATA_PERIOD_MS.
 // Tra ve true khi vi tri con moi (< GPS_FIX_MAX_AGE_MS) va du ve tinh (>= SATS_LEVEL_2 = 7).
 // Mat fix: d->satellites = 0, thu vien id_open se phat Location voi trang thai loi.
+// Khong dien hdop_s/vdop_s: id_open khong doc 2 truong nay (do chinh xac ngang co dinh 10 m).
 // Dong thoi dong bo dong ho he thong theo gio GPS (cho den luc co fix dong ho chay theo SCENARIO_EPOCH).
 bool gps_step(UTM_data *d);
 

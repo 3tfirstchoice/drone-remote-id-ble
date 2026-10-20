@@ -10,16 +10,23 @@
 #include <stdint.h>
 #include <sys/time.h>
 
-static TinyGPSPlus gps;
+static TinyGPSPlus gps;              // bo phan tich NMEA: nhan tung ky tu, giu gia tri moi nhat
 
-static char    hdop_str[8] = "99.9";   // HDOP = sai so ngang cua GPS, cang nho cang tot
-static char    vdop_str[8] = "99.9";   // TinyGPSPlus khong doc cau GSA nen khong biet VDOP
-static bool    home_set    = false;
-static double  home_lat    = 0.0, home_lon = 0.0;
-static float   home_alt    = 0.0f;
-static int     last_heading = 0;       // huong GPS khong tin cay khi dung yen -> giu huong cu
-static bool    clock_synced = false;
+// Home = vi tri nguoi dieu khien (System message), chot 1 lan o fix dat chuan dau tien
+static bool     home_set = false;
+static double   home_lat = 0.0, home_lon = 0.0;
+static float    home_alt = 0.0f;
+
+static int      last_heading = 0;    // huong GPS khong tin cay khi dung yen -> giu huong cu
+static bool     clock_synced = false;
 static uint32_t last_sync_ms = 0;
+
+// Mot gia tri NMEA chi dung duoc khi da tung nhan (isValid) VA con moi (nhan trong GPS_FIX_MAX_AGE_MS).
+// TinyGPSPlus giu gia tri cu mai mai khi mat fix, nen phai kiem tra tuoi (age) moi lan doc.
+template <typename T>
+static bool is_fresh(T &v) {
+  return v.isValid() && v.age() <= GPS_FIX_MAX_AGE_MS;
+}
 
 // ---------------------------------------------------------------- thoi gian
 // Ngay gio UTC -> giay Unix (thuat toan "days from civil", khong phu thuoc timegm cua libc).
@@ -37,9 +44,7 @@ static int64_t utc_to_unix(int y, int m, int d, int hh, int mm, int ss) {
 static void sync_clock(void) {
   const uint32_t now = millis();
   if (clock_synced && (uint32_t) (now - last_sync_ms) < GPS_CLOCK_SYNC_MS) return;
-  if (!(gps.location.isValid() && gps.date.isValid() && gps.time.isValid())) return;
-  if (gps.location.age() > GPS_FIX_MAX_AGE_MS || gps.date.age() > GPS_FIX_MAX_AGE_MS ||
-      gps.time.age() > GPS_FIX_MAX_AGE_MS) return;
+  if (!(is_fresh(gps.location) && is_fresh(gps.date) && is_fresh(gps.time))) return;
   if (gps.date.year() < 2024) return;   // ngay vo ly: bo qua
 
   int64_t t  = utc_to_unix(gps.date.year(), gps.date.month(), gps.date.day(),
@@ -72,30 +77,18 @@ void gps_poll(void) {
 bool gps_step(UTM_data *d) {
   sync_clock();
 
-  const bool fresh = gps.location.isValid() && gps.location.age() <= GPS_FIX_MAX_AGE_MS &&
-                     gps.altitude.isValid() && gps.altitude.age() <= GPS_FIX_MAX_AGE_MS;
-  const bool sats_ok = gps.satellites.isValid() && gps.satellites.age() <= GPS_FIX_MAX_AGE_MS;
+  const bool fresh = is_fresh(gps.location) && is_fresh(gps.altitude);
 
-  d->satellites = (fresh && sats_ok) ? (int) gps.satellites.value() : 0;
-  d->hdop_s = hdop_str;
-  d->vdop_s = vdop_str;
-
-  if (!fresh) {
-    snprintf(hdop_str, sizeof hdop_str, "99.9");
-    return false;                  // giu nguyen toa do cu; satellites = 0 -> thu vien bao loi
-  }
+  // satellites < 7 (SATS_LEVEL_2) -> id_open phat Location voi Status = REMOTE_ID_SYSTEM_FAILURE
+  d->satellites = (fresh && is_fresh(gps.satellites)) ? (int) gps.satellites.value() : 0;
+  if (!fresh) return false;          // giu nguyen toa do cu, nhung goi Location bao loi
 
   d->latitude_d  = gps.location.lat();
   d->longitude_d = gps.location.lng();
   d->alt_msl_m   = (float) gps.altitude.meters();
 
-  if (gps.hdop.isValid()) snprintf(hdop_str, sizeof hdop_str, "%.1f", gps.hdop.hdop());
-  else                    snprintf(hdop_str, sizeof hdop_str, "99.9");
-
-  const bool speed_ok = gps.speed.isValid() && gps.speed.age() <= GPS_FIX_MAX_AGE_MS;
-  d->speed_kn = speed_ok ? (int) lround(gps.speed.knots()) : 0;
-
-  if (gps.course.isValid() && gps.course.age() <= GPS_FIX_MAX_AGE_MS && d->speed_kn >= GPS_MIN_SPEED_KN) {
+  d->speed_kn = is_fresh(gps.speed) ? (int) lround(gps.speed.knots()) : 0;
+  if (is_fresh(gps.course) && d->speed_kn >= GPS_MIN_SPEED_KN) {
     last_heading = ((int) lround(gps.course.deg())) % 360;
   }
   d->heading = last_heading;
@@ -124,7 +117,6 @@ bool gps_home(double *lat, double *lon, float *alt_msl_m) {
 #ifdef GPS_SOURCE_TESTING
 void gps_test_reset(void) {         // chi dung trong test tren may tinh
   gps = TinyGPSPlus();
-  snprintf(hdop_str, sizeof hdop_str, "99.9");
   home_set = false; home_lat = home_lon = 0.0; home_alt = 0.0f;
   last_heading = 0; clock_synced = false; last_sync_ms = 0;
 }

@@ -1,9 +1,15 @@
-// status_led.cpp - dieu khien LED khong dung delay()
+// status_led.cpp - dieu khien LED khong dung delay(): led_tick dat che do, led_service bat/tat
 #include "status_led.h"
 #include "config.h"
 
-static uint32_t t0   = 0;      // thoi diem bat dau chu ky 1 giay
-static uint8_t  mode = 0;      // 0 = OK, 1 = chua fix, 2 = loi BLE
+enum LedMode : uint8_t {
+  LED_OK,          // 1 lan nhay moi giay
+  LED_NO_FIX,      // 2 lan nhay moi giay
+  LED_BLE_ERROR,   // nhay nhanh lien tuc (uu tien cao nhat)
+};
+
+static uint32_t t0   = 0;        // thoi diem bat dau chu ky 1 giay hien tai
+static LedMode  mode = LED_OK;
 
 void led_begin(void) {
   pinMode(STATUS_LED_PIN, OUTPUT);
@@ -11,15 +17,17 @@ void led_begin(void) {
 }
 
 void led_tick(bool fix_ok, bool ble_ok) {
-  mode = !ble_ok ? 2 : (!fix_ok ? 1 : 0);
+  mode = !ble_ok ? LED_BLE_ERROR : (!fix_ok ? LED_NO_FIX : LED_OK);
   t0 = millis();
 }
 
 void led_service(void) {
-  uint32_t t = millis() - t0;
-  bool on = false;
-  if (mode == 0)      on = (t < 80);
-  else if (mode == 1) on = (t < 80) || (t >= 200 && t < 280);
-  else                on = ((t / 100) % 2 == 0);
+  const uint32_t t = millis() - t0;   // ms ke tu dau chu ky
+  bool on;
+  switch (mode) {
+    case LED_OK:     on = (t < 80);                              break;
+    case LED_NO_FIX: on = (t < 80) || (t >= 200 && t < 280);     break;
+    default:         on = ((t / 100) % 2 == 0);                  break;   // 100 ms sang, 100 ms tat
+  }
   digitalWrite(STATUS_LED_PIN, on ? HIGH : LOW);
 }

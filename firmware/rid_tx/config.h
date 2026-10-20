@@ -1,7 +1,7 @@
 // config.h - moi hang so cua firmware rid_tx dat o day
 #pragma once
 
-#define FW_VERSION       "0.4.0"
+#define FW_VERSION       "0.4.1"
 
 // --- Nguon du lieu: 0 = gia lap tu waypoints.h, 1 = GPS that (giai doan 2) ---
 // USE_GPS 1 can thu vien "TinyGPSPlus" (Mikal Hart): Arduino IDE > Library Manager.
@@ -26,11 +26,12 @@
 #define DATA_PERIOD_MS   1000              // cap nhat du lieu + in log 1 Hz
 #define BOOT_DELAY_MS    500               // USB native: cho may tinh nhan cong COM
 #define MOCK_SATS        10                // phai >= 7, neu khong thu vien khong phat Location
+#define FIRST_TX_WARN_MS 5000              // qua muc nay ma chua co goi BLE nao thi in canh bao
 
 // --- Chan (xem BOARD_PINS.md) ---
 #define STATUS_LED_PIN   48                // D13, den xanh la, sang khi HIGH
 #define GPS_RX_PIN       6                 // D3: ESP32 nhan <- TX cua GPS
-#define GPS_TX_PIN       7                 // D4: ESP32 gui  -> RX cua GPS
+#define GPS_TX_PIN       7                 // D4: ESP32 gui  -> RX cua GPS (firmware khong gui lenh nao)
 
 // --- GPS: M5Stack GPS/BDS Unit v1.1 (AT6668), UART mac dinh 115200 8N1 ---
 // Dung tools/gps_passthrough de xac nhan baud/dinh dang truoc khi doi cac gia tri nay.
