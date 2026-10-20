@@ -1,11 +1,12 @@
 // rid_tx.ino - phat Remote ID (ASTM F3411) qua BLE Legacy Advertising, ESP32-S3
-// Giai doan 1: du lieu gia lap tu waypoints.h. Giai doan 2: GPS NEO-6M (USE_GPS 1).
+// Giai doan 1: du lieu gia lap tu waypoints.h. Giai doan 2: GPS that, M5Stack GPS/BDS Unit v1.1 (USE_GPS 1).
 #include "id_open.h"
 #include "config.h"
 #include "waypoints.h"      // SCENARIO_EPOCH
 #include "mock_source.h"
 #include "telemetry.h"
 #include "status_led.h"
+#include "ble_stats.h"      // ble_tx_cnt, ble_err_cnt (PATCH #2)
 #if USE_GPS
 #include "gps_source.h"
 #endif
@@ -13,8 +14,6 @@
 ID_OpenDrone   squitter;
 UTM_parameters utm_parameters;
 UTM_data       utm_data;
-
-extern uint32_t ble_err_cnt, ble_tx_cnt;   // PATCH #2
 
 // Dien ngay gio UTC tu dong ho he thong vao UTM_data
 static void fill_time(UTM_data *d) {
@@ -69,10 +68,13 @@ void setup() {
 
   led_begin();
   init_identity();
+  Serial.printf("# identity uav=%s operator=%s self_id=%s\n", UAV_ID, OPERATOR_ID, SELF_ID_TEXT);
   memset(&utm_data, 0, sizeof(utm_data));
 
 #if USE_GPS
   gps_begin();
+  Serial.printf("# gps uart rx=GPIO%d tx=GPIO%d baud=%d %s, cho fix...\n",
+                GPS_RX_PIN, GPS_TX_PIN, GPS_BAUD, GPS_UART_7N1 ? "7N1" : "8N1");
   utm_data.base_valid = 0;            // cho home tu GPS
 #else
   mock_step(&utm_data);               // dien san du lieu diem dau tien
@@ -93,9 +95,14 @@ void loop() {
 
   handle_serial();
   static bool first_tx_done = false;
+  static bool tx_warned     = false;
   if (!first_tx_done && ble_tx_cnt > 0) {
     first_tx_done = true;
     Serial.printf("# first_tx ms=%lu\n", (unsigned long) millis());
+  } else if (!first_tx_done && !tx_warned && millis() > 5000) {
+    tx_warned = true;   // BLE khong len duoc: in 1 lan de nguoi dung biet, khong im lang
+    Serial.printf("# CANH BAO: sau 5 s van chua phat duoc goi BLE nao (ble_err=%lu)\n",
+                  (unsigned long) ble_err_cnt);
   }
 #if USE_GPS
   gps_poll();                          // doc UART GPS lien tuc
