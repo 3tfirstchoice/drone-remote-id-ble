@@ -21,7 +21,8 @@ Goi OhStem khong dinh nghia LED_BUILTIN / RGB_BUILTIN / PIN_NEOPIXEL.
 - STATUS_LED_PIN = 48 (digitalWrite, 1 mau, bao trang thai bang mau nhay)
 - GPS_RX_PIN = 6 (D3): ESP32 nhan, noi vao chan TX cua module GPS
 - GPS_TX_PIN = 7 (D4): ESP32 gui, noi vao chan RX cua module GPS
-- GPS_BAUD = 9600
+- GPS_BAUD = 115200, 8N1 (M5Stack GPS/BDS Unit v1.1 AT6668; module cu NEO-6M dung 9600). Dung tools/gps_passthrough de xac nhan
+- Day Grove: den = GND, do = 5V, vang = RX/TX tuy huong nhin; neu khong co du lieu, gps_passthrough tu thu dao RX/TX
 
 ## Phan cung da xac nhan (board_test)
 - Chip: ESP32-S3 (v0.2), 2 nhan, 240 MHz

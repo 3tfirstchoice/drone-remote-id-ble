@@ -16,3 +16,8 @@
 - Verify: Sketch uses 890033 bytes (67%) of 1310720; global variables 45916 bytes (14%)
 - Serial: "# lib_test start", "[BLE] init ok, tx power level enum=11", "# lib_test init done"
 - Luu y: build bang board OhStem (ESP-IDF 5.3) bi loi wifi.c:16 (clock_gettime), nen firmware chinh phai build bang ESP32S3 Dev Module + core 2.0.17
+
+## Giai doan 2 (GPS that, USE_GPS 1)
+- Thu vien them: TinyGPSPlus (Mikal Hart) 1.1.0, cai bang Arduino IDE > Library Manager. Build gia lap (USE_GPS 0) khong can.
+- GPS: M5Stack GPS/BDS Unit v1.1 (AT6668), UART 115200 8N1, NMEA 0183, Serial1 = GPIO6 (RX) / GPIO7 (TX)
+- Test tren may tinh: `bash firmware/test/run_tests.sh` (can g++, gcc, git; khong can board)

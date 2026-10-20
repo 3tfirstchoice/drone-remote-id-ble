@@ -28,7 +28,7 @@ struct Combo { uint32_t baud; uint32_t cfg; const char *name; };
 static const Combo COMBOS[] = {
   { 115200, SERIAL_8N1, "115200 8N1" },   // mac dinh cua Unit GPS v1.1 (AT6668)
   { 115200, SERIAL_7N1, "115200 7N1" },   // mot so khach bao 7N1
-  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh cua doi truoc (AT6558 / NEO-6M)
+  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh cua doi truoc (doi truoc: AT6558 / NEO-6M)
   {  38400, SERIAL_8N1, "38400 8N1"  },
   {   9600, SERIAL_7N1, "9600 7N1"   },
 };
@@ -90,6 +90,10 @@ static int     g_fix = 0, g_sats = 0;
 static char    g_hdop[12] = "", g_alt[12] = "";
 static double  g_lat = 0, g_lon = 0;
 static uint32_t n_valid = 0, n_bad = 0;
+// GSV = ve tinh "nhin thay" theo tung he (GP=GPS, BD/GB=BeiDou, GL=GLONASS, GA=Galileo)
+static const int MAX_TALKER = 6;
+static char     gsv_talker[MAX_TALKER][3];
+static int      gsv_inview[MAX_TALKER];
 
 static void gps_open(const Combo &c, bool swap) {
   Serial1.end();
@@ -185,13 +189,30 @@ static void handle_sentence(const char *s) {
       g_lon = nmea_deg(lon, ew[0], 3);
     }
   }
+  // $GxGSV: truong 3 = tong so ve tinh nhin thay cua he x (de biet anten co thay troi hay khong)
+  if (strncmp(s + 3, "GSV", 3) == 0) {
+    char f[8];
+    if (!nmea_field(s, 3, f, sizeof f)) return;
+    int slot = -1;
+    for (int i = 0; i < MAX_TALKER; i++) {
+      if (gsv_talker[i][0] == 0 && slot < 0) slot = i;                    // o trong dau tien
+      if (strncmp(gsv_talker[i], s + 1, 2) == 0) { slot = i; break; }     // da co he nay
+    }
+    if (slot >= 0) { memcpy(gsv_talker[slot], s + 1, 2); gsv_talker[slot][2] = 0; gsv_inview[slot] = atoi(f); }
+  }
+}
+
+static int sats_in_view(void) {
+  int sum = 0;
+  for (int i = 0; i < MAX_TALKER; i++) sum += gsv_inview[i];
+  return sum;
 }
 
 static void print_summary(void) {
-  Serial.printf("# cau_dung=%lu cau_sai=%lu | fix=%d ve_tinh=%d hdop=%s do_cao=%s m",
-                (unsigned long) n_valid, (unsigned long) n_bad, g_fix, g_sats, g_hdop, g_alt);
+  Serial.printf("# cau_dung=%lu cau_sai=%lu | fix=%d ve_tinh=%d nhin_thay=%d hdop=%s do_cao=%s m",
+                (unsigned long) n_valid, (unsigned long) n_bad, g_fix, g_sats, sats_in_view(), g_hdop, g_alt);
   if (g_fix > 0) Serial.printf(" | lat=%.6f lon=%.6f", g_lat, g_lon);
-  else           Serial.print(" | CHUA FIX (ra gan cua so/ngoai troi, cho vai phut)");
+  else           Serial.print(" | CHUA FIX (nhin_thay=0: anten khong thay troi -> ra cua so/ngoai troi; >0 ma chua fix: cho them)");
   Serial.println();
 }
 

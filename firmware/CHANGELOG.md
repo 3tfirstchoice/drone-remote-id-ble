@@ -29,3 +29,14 @@
 - Firmware in them dong `# first_tx ms=N`; them tools/t05_measure.ps1
 - T05 dat (khoi phuc sau khi mat nguon), T06 dat (phat lien tuc khi dong/mo app, err=0)
 - T07 (chay 30 phut) va T08 (cu ly) khong thuc hien
+
+## fw-v0.4-gps (2026-10-20)
+- Giai doan 2: `rid_tx/gps_source.cpp` doc GPS that (M5Stack GPS/BDS Unit v1.1, UART1 GPIO6/7, 115200 8N1) bang TinyGPSPlus; bat bang `USE_GPS 1`
+- Home = fix dat chuan dau tien, AGL tinh tu home, giu huong khi cham, mat fix -> Location bao loi, dong bo dong ho he thong theo gio GPS
+- `tools/gps_passthrough`: do baud/dinh dang va RX/TX tu dong, tom tat fix/ve_tinh/nhin_thay/hdop
+- config.h: static_assert, `# identity` luc khoi dong, canh bao khi 5 s chua phat BLE; `ble_stats.h` thay cho khai bao extern lap lai; `telemetry_format()` tach rieng de test
+- `firmware/test/run_tests.sh`: 1181 kiem tra tren may tinh (GPS, log, den bao, waypoints, byte Operator ID); da thu pha code co chu y de xac nhan test bat duoc loi
+- Ghi chu T04: luc do T04 mang hinh chu nhat co 41 diem (diem cuoi trung diem dau); `waypoints.h` hien tai co 40 diem, vong lap 40 giay
+- Operator ID: byte phat dung; canh bao cua Drone Scanner den tu kiem tra dinh dang o phia app (xem README)
+- SCENARIO_EPOCH co dinh theo lan sinh waypoints (co chu y); che do GPS dung gio GPS
+- Chua kiem chung tren board that: bien dich Arduino IDE, fix ngoai troi

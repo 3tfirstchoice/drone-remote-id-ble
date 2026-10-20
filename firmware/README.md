@@ -1,7 +1,7 @@
 # Firmware - YOLO UNO (ESP32-S3) phat Remote ID qua BLE
 
 Firmware `rid_tx` phat goi Remote ID (ASTM F3411 / OpenDroneID) bang BLE Legacy Advertising, Service Data UUID 0xFFFA.
-Giai doan 1 phat du lieu gia lap tu `rid_tx/waypoints.h`. Giai doan 2 (USE_GPS 1) phat du lieu tu GPS NEO-6M.
+Giai doan 1 phat du lieu gia lap tu `rid_tx/waypoints.h`. Giai doan 2 (USE_GPS 1) phat du lieu tu GPS that (M5Stack GPS/BDS Unit v1.1, AT6668).
 
 Huong dan nap day du, loi thuong gap: se bo sung o ban phat hanh v1.0.
 
@@ -58,3 +58,30 @@ Dong Serial Monitor cua Arduino IDE truoc (cong COM chi mo duoc boi 1 chuong tri
     powershell -NoProfile -ExecutionPolicy Bypass -File firmware\tools\capture_log.ps1 -Cmd 1 -Count 60 -Out firmware\evidence\T02.csv
 
 `-Cmd` la lenh chon kich ban (1, 2 hoac 3), `-Count` la so dong D can ghi, `-Port` mac dinh COM8.
+
+## Giai doan 2: GPS that
+
+1. Cai thu vien **TinyGPSPlus** (Arduino IDE > Library Manager).
+2. Noi day (xem `BOARD_PINS.md`): GND-GND, 5V-5V, TX cua GPS -> D3 (GPIO6), RX cua GPS -> D4 (GPIO7). Neu khong co du lieu thi dao 2 day TX/RX.
+3. Nap `tools/gps_passthrough` truoc: sketch tu thu cac to hop baud/dinh dang, in dong `# => CHON: ...` va tom tat moi 2 giay (`fix`, `ve_tinh` dung de fix, `nhin_thay` = ve tinh anten dang thay, `hdop`). Phai de gan cua so/ngoai troi; trong nha thuong khong fix. Lenh: `v` bat/tat in cau tho, `r` do lai.
+4. Neu baud khac 115200 hoac module chay 7N1, sua `GPS_BAUD` / `GPS_UART_7N1` trong `rid_tx/config.h`.
+5. Dat `USE_GPS 1` trong `rid_tx/config.h`, nap `rid_tx`. Den xanh nhay 2 lan/giay cho den khi du >= 7 ve tinh.
+
+Hanh vi chinh (`rid_tx/gps_source.cpp`):
+- Moi giay dien `UTM_data` tu cau GGA/RMC moi nhat; mat fix (qua `GPS_FIX_MAX_AGE_MS` = 2 s) hoac < 7 ve tinh thi goi Location bao loi, khong phat toa do cu nhu toa do hop le.
+- Home (vi tri nguoi dieu khien) = diem fix dat chuan dau tien; do cao AGL = do cao MSL hien tai tru do cao home.
+- Huong (heading) giu gia tri cu khi toc do < 1 kn, vi huong GPS khong tin cay luc dung yen.
+- Dong ho he thong duoc dong bo theo gio GPS (chi khi co fix, moi 60 s); truoc do chay theo `SCENARIO_EPOCH`.
+- Cac dong log co `scn=-1`, `idx=0` o che do GPS.
+
+## Kiem thu tren may tinh
+
+    bash firmware/test/run_tests.sh
+
+Chay logic GPS (voi TinyGPSPlus that), dinh dang log, den bao, waypoints va byte Operator ID tren may tinh bang stub Arduino. Khong thay the viec nap board that: chua kiem chung bien dich Arduino IDE, BLE va fix ngoai troi.
+
+## Cau hinh va luu y
+
+- `config.h` co static_assert kiem tra ID (toi da 20 ky tu), toa do home, `MOCK_SATS` >= 7: sai thi bao loi luc bien dich.
+- Luc khoi dong firmware in `# identity ...` (ID dang phat); sau 5 s ma chua co goi BLE nao se in `# CANH BAO`.
+- Operator ID `LAB-OPERATOR-01` duoc ma hoa dung (giu nguyen dau gach, da test). App Drone Scanner hien "LABOPERATOR01" kem canh bao vi no kiem tra dinh dang dang ky EU, khong phai loi firmware. Muon het canh bao thi doi `OPERATOR_ID` sang dinh dang ma app chap nhan (chua kiem chung).
