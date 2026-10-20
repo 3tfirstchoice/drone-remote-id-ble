@@ -1,3 +1,4 @@
+// board_test.ino - in thong tin chip, flash, PSRAM cua board (ket qua ghi trong BOARD_PINS.md)
 void setup() {
   Serial.begin(115200);
   delay(3000);

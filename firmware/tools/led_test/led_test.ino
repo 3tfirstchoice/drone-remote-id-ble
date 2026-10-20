@@ -1,3 +1,4 @@
+// led_test.ino - thu den tren GPIO48: NeoPixel hay LED thuong (ket luan: LED thuong, xem BOARD_PINS.md)
 void setup() {
   Serial.begin(115200);
   delay(2000);

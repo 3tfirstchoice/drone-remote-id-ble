@@ -1,6 +1,7 @@
 // gps_passthrough.ino - kiem tra module GPS M5Stack (AT6668) noi vao board OhStem YOLO UNO.
+// Sketch doc lap (khong dung rid_tx/), nap truoc khi bat USE_GPS 1 trong rid_tx/config.h.
 //
-// Muc dich: truoc khi viet gps_source, xac nhan 3 dieu:
+// Muc dich: xac nhan 3 dieu:
 //   1) day noi dung chua (RX/TX co bi dao khong)
 //   2) baud va dinh dang (8N1 / 7N1) dung chua
 //   3) module da "fix" (dinh vi duoc) chua
@@ -8,7 +9,8 @@
 // Cach hoat dong:
 //   Giai doan 1 (~25 giay): thu lan luot cac to hop {chan, baud, dinh dang}. Moi to hop nghe 2.5 giay,
 //                           dem so cau NMEA co checksum DUNG. To hop nao nhieu nhat duoc chon.
-//   Giai doan 2:            giu to hop da chon, in cau NMEA tho (5 giay dau) va 1 dong tom tat moi 2 giay.
+//   Giai doan 2:            giu to hop da chon, in cau NMEA tho (5 giay dau) va 1 dong tom tat moi 2 giay:
+//                           fix, ve_tinh (dung de fix, cau GGA), nhin_thay (anten thay, cau GSV), hdop.
 //
 // Serial Monitor: 115200 baud. Go 'v' de bat/tat in cau tho, go 'r' de do lai tu dau.
 // Chan GPS lay tu BOARD_PINS.md: D3 = GPIO6 (ESP32 nhan), D4 = GPIO7 (ESP32 gui) - trung config.h.
@@ -28,7 +30,7 @@ struct Combo { uint32_t baud; uint32_t cfg; const char *name; };
 static const Combo COMBOS[] = {
   { 115200, SERIAL_8N1, "115200 8N1" },   // mac dinh cua Unit GPS v1.1 (AT6668)
   { 115200, SERIAL_7N1, "115200 7N1" },   // mot so khach bao 7N1
-  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh cua doi truoc (doi truoc: AT6558 / NEO-6M)
+  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh cua module doi truoc (AT6558, NEO-6M)
   {  38400, SERIAL_8N1, "38400 8N1"  },
   {   9600, SERIAL_7N1, "9600 7N1"   },
 };
@@ -77,14 +79,30 @@ static double nmea_deg(const char *f, char hemi, int deg_digits) {
   return (hemi == 'S' || hemi == 'W') ? -v : v;
 }
 
+// Gom ky tu UART thanh tung dong. push() tra ve true khi vua xong 1 dong (nam trong buf).
+struct LineReader {
+  char   buf[LINE_MAX];
+  size_t n = 0;
+  bool push(char ch) {
+    if (ch == '\n' || ch == '\r') {
+      if (n == 0) return false;          // \r\n: dong rong thu hai, bo qua
+      buf[n] = 0;
+      n = 0;
+      return true;
+    }
+    if (n + 1 < sizeof(buf)) buf[n++] = ch;
+    else n = 0;                          // cau qua dai: bo
+    return false;
+  }
+};
+
 // ---------------------------------------------------------------- trang thai
 static int  chosen = -1;            // to hop duoc chon
 static bool swapped = false;        // true neu phai dao chan RX/TX
 static bool verbose = true;
 static uint32_t lock_ms = 0, last_sum = 0;
+static LineReader reader;           // dung o giai doan 2
 
-static char    line[LINE_MAX];
-static size_t  len = 0;
 // Ban tin GGA moi nhat
 static int     g_fix = 0, g_sats = 0;
 static char    g_hdop[12] = "", g_alt[12] = "";
@@ -94,6 +112,16 @@ static uint32_t n_valid = 0, n_bad = 0;
 static const int MAX_TALKER = 6;
 static char     gsv_talker[MAX_TALKER][3];
 static int      gsv_inview[MAX_TALKER];
+
+static void reset_stats(void) {
+  n_valid = n_bad = 0;
+  g_fix = g_sats = 0;
+  g_hdop[0] = g_alt[0] = 0;
+  g_lat = g_lon = 0;
+  memset(gsv_talker, 0, sizeof gsv_talker);
+  memset(gsv_inview, 0, sizeof gsv_inview);
+  reader.n = 0;
+}
 
 static void gps_open(const Combo &c, bool swap) {
   Serial1.end();
@@ -106,23 +134,13 @@ static void gps_open(const Combo &c, bool swap) {
 static void probe(const Combo &c, bool swap, uint32_t ms, uint32_t &bytes, uint32_t &ok, uint32_t &bad) {
   gps_open(c, swap);
   bytes = ok = bad = 0;
-  size_t n = 0;
-  char buf[LINE_MAX];
+  LineReader r;
   uint32_t t0 = millis();
   while (millis() - t0 < ms) {
     while (Serial1.available()) {
-      char ch = (char) Serial1.read();
       bytes++;
-      if (ch == '\n' || ch == '\r') {
-        if (n > 0) {
-          buf[n] = 0;
-          if (buf[0] == '$') { if (nmea_valid(buf)) ok++; else bad++; }
-          n = 0;
-        }
-      } else if (n + 1 < sizeof(buf)) {
-        buf[n++] = ch;
-      } else {
-        n = 0;                       // cau qua dai: bo
+      if (r.push((char) Serial1.read()) && r.buf[0] == '$') {
+        if (nmea_valid(r.buf)) ok++; else bad++;
       }
     }
   }
@@ -152,8 +170,8 @@ static void run_detection(void) {
                   best_swap ? ", PHAI DAO day vang/trang" : "", (unsigned long) best_ok);
     if (best_swap) Serial.println("# Goi y: dao 2 day tin hieu tren board, hoac doi GPS_RX_PIN/GPS_TX_PIN trong config.h.");
     gps_open(COMBOS[best], best_swap);
-    lock_ms = millis(); last_sum = lock_ms; len = 0;
-    n_valid = n_bad = 0; g_fix = g_sats = 0;
+    lock_ms = millis(); last_sum = lock_ms;
+    reset_stats();
     Serial.println("# ---- Giai doan 2: doc lien tuc ('v' bat/tat cau tho, 'r' do lai) ----");
     return;
   }
@@ -235,14 +253,7 @@ void loop() {
   if (chosen < 0) return;
 
   while (Serial1.available()) {
-    char ch = (char) Serial1.read();
-    if (ch == '\n' || ch == '\r') {
-      if (len > 0) { line[len] = 0; if (line[0] == '$') handle_sentence(line); len = 0; }
-    } else if (len + 1 < sizeof(line)) {
-      line[len++] = ch;
-    } else {
-      len = 0;
-    }
+    if (reader.push((char) Serial1.read()) && reader.buf[0] == '$') handle_sentence(reader.buf);
   }
 
   if (millis() - last_sum >= 2000) {
