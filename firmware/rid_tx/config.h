@@ -1,7 +1,7 @@
 // config.h - moi hang so cua firmware rid_tx dat o day
 #pragma once
 
-#define FW_VERSION       "0.4.1"
+#define FW_VERSION       "0.4.2"
 
 // --- Nguon du lieu: 0 = gia lap tu waypoints.h, 1 = GPS that (giai doan 2) ---
 // USE_GPS 1 can thu vien "TinyGPSPlus" (Mikal Hart): Arduino IDE > Library Manager.
@@ -12,7 +12,9 @@
 
 // --- Dinh danh ---
 #define UAV_ID           "LAB-ESP32-0001"
-#define OPERATOR_ID      "LAB-OPERATOR-01"
+// Operator ID theo dinh dang so dang ky EU: 3 chu cai quoc gia + 13 ky tu, dau '-', 3 ky tu bi mat (tong 20).
+// Gia tri nay la GIA, chi de thu nghiem. Dinh dang cu "LAB-OPERATOR-01" bi Drone Scanner canh bao khong hop le.
+#define OPERATOR_ID      "VNM87labtest0001-abc"
 #define SELF_ID_TEXT     "LAB SIMULATION"
 
 // --- Vi tri nguoi dieu khien (home) ---

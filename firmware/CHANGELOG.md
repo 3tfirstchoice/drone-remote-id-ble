@@ -49,3 +49,8 @@
 - `tools/gps_passthrough`: gom doan ghep cau NMEA lap 2 lan thanh `LineReader`; lenh `r` xoa ca so lieu GSV cu
 - `firmware/test`: them test cho chinh `rid_tx.ino` o ca 2 che do (build 2 lan); gom bien gia lap vao `stubs/stubs.cpp`, cau NMEA vao `nmea_fixture.h`; kiem tra 2 ban waypoints.h giong nhau va cu phap gps_passthrough; da thu pha code co chu y de xac nhan test bat duoc loi
 - Them `tools/README.md`, muc "Cau truc code" trong README; bo cac file .gitkeep thua
+
+## fw-v0.4.2-operator-id (2026-10-21)
+- `OPERATOR_ID` doi tu `LAB-OPERATOR-01` sang `VNM87labtest0001-abc` (dinh dang so dang ky EU, gia tri gia) de xu ly canh bao Operator ID cua Drone Scanner; chua kiem chung tren app that
+- Test: byte Operator ID du 20 ky tu va co dau '-'
+
