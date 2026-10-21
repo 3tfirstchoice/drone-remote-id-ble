@@ -1,4 +1,4 @@
-// check.h - khung kiem tra toi gian cho firmware/test
+// check.h - macro kiem tra cho test
 #pragma once
 #include <stdio.h>
 #include <string.h>
@@ -14,13 +14,13 @@ extern int g_pass, g_fail;
     printf("  FAIL %s:%d  %s = \"%s\", expected \"%s\"\n", __FILE__, __LINE__, #a, _a ? _a : "(null)", _b); } } while (0)
 #define RUN(fn) do { printf("[%s]\n", #fn); fn(); } while (0)
 
-// In tong ket va tra ve ma thoat cho main()
+// In tong ket, tra ve ma thoat
 static inline int report(const char *name) {
   printf("%s: %d kiem tra dat, %d that bai\n", name, g_pass, g_fail);
   return g_fail ? 1 : 0;
 }
 
-// Dong ho gia lap (stubs/stubs.cpp)
+// Dong ho gia lap
 extern int            stub_settime_calls;
 extern struct timeval stub_settime_last;
 void stub_reset_clock(void);

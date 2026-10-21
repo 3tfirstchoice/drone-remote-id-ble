@@ -1,10 +1,10 @@
-// test_status_led.cpp - 3 che do den: binh thuong, chua fix GPS, loi BLE
+// test_status_led.cpp - test 3 che do LED
 #include <Arduino.h>
 #include "check.h"
 #include "status_led.h"
 #include "config.h"
 
-static int level_at(uint32_t t_ms) {           // trang thai den sau t_ms ke tu led_tick
+static int level_at(uint32_t t_ms) {           // muc LED sau t_ms ke tu led_tick
   stub_millis = 5000 + t_ms;
   led_service();
   return stub_pin_level[STATUS_LED_PIN];
@@ -16,15 +16,15 @@ static void test_normal_one_blink(void) {
   CHECK(level_at(0) == HIGH);
   CHECK(level_at(79) == HIGH);
   CHECK(level_at(80) == LOW);
-  CHECK(level_at(240) == LOW);                 // khong co nhay thu hai
+  CHECK(level_at(240) == LOW);
   CHECK(level_at(999) == LOW);
 }
 
 static void test_no_fix_two_blinks(void) {
-  tick(false, true);                           // che do "chua fix" (chi gap khi USE_GPS 1)
+  tick(false, true);
   CHECK(level_at(0) == HIGH);
   CHECK(level_at(100) == LOW);
-  CHECK(level_at(200) == HIGH);                // nhay lan 2
+  CHECK(level_at(200) == HIGH);
   CHECK(level_at(279) == HIGH);
   CHECK(level_at(280) == LOW);
   CHECK(level_at(900) == LOW);
@@ -41,14 +41,14 @@ static void test_ble_error_fast_blink(void) {
 static void test_ble_error_has_priority_over_no_fix(void) {
   tick(false, false);
   CHECK(level_at(0) == HIGH);
-  CHECK(level_at(100) == LOW);                 // nhay nhanh lien tuc (che do loi BLE), khong phai 2 lan nhay
+  CHECK(level_at(100) == LOW);
   CHECK(level_at(200) == HIGH);
 }
 
 static void test_recovery_returns_to_normal(void) {
   tick(false, true);
   tick(true, true);
-  CHECK(level_at(240) == LOW);                 // co fix lai: chi con 1 lan nhay
+  CHECK(level_at(240) == LOW);
 }
 
 void run_status_led_tests(void) {

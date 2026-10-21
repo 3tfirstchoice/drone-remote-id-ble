@@ -1,4 +1,4 @@
-# capture_log.ps1 - doc log Serial cua rid_tx truc tiep tu cong COM, luu ra CSV
+# capture_log.ps1 - doc log Serial cua rid_tx va luu cac dong du lieu ra CSV
 # Vi du: powershell -NoProfile -ExecutionPolicy Bypass -File capture_log.ps1 -Cmd 1 -Count 60 -Out T02.csv
 param(
   [string]$Port = "COM8",
@@ -21,7 +21,7 @@ try { $sp.Open() } catch {
 }
 Start-Sleep -Milliseconds 300
 $sp.DiscardInBuffer()
-$sp.Write($Cmd + "h")          # lenh chon kich ban + 'h' de in header
+$sp.Write($Cmd + "h")          # chon kich ban va in header
 
 $started = $false
 $h = $null

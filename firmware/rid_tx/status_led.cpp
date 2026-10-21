@@ -1,14 +1,14 @@
-// status_led.cpp - dieu khien LED khong dung delay(): led_tick dat che do, led_service bat/tat
+// status_led.cpp - dieu khien LED trang thai khong dung delay()
 #include "status_led.h"
 #include "config.h"
 
 enum LedMode : uint8_t {
-  LED_OK,          // 1 lan nhay moi giay
-  LED_NO_FIX,      // 2 lan nhay moi giay
-  LED_BLE_ERROR,   // nhay nhanh lien tuc (uu tien cao nhat)
+  LED_OK,          // 1 nhay moi giay
+  LED_NO_FIX,      // 2 nhay moi giay
+  LED_BLE_ERROR,   // nhay nhanh lien tuc
 };
 
-static uint32_t t0   = 0;        // thoi diem bat dau chu ky 1 giay hien tai
+static uint32_t t0   = 0;        // thoi diem bat dau chu ky hien tai
 static LedMode  mode = LED_OK;
 
 void led_begin(void) {
@@ -22,12 +22,12 @@ void led_tick(bool fix_ok, bool ble_ok) {
 }
 
 void led_service(void) {
-  const uint32_t t = millis() - t0;   // ms ke tu dau chu ky
+  const uint32_t t = millis() - t0;
   bool on;
   switch (mode) {
     case LED_OK:     on = (t < 80);                              break;
     case LED_NO_FIX: on = (t < 80) || (t >= 200 && t < 280);     break;
-    default:         on = ((t / 100) % 2 == 0);                  break;   // 100 ms sang, 100 ms tat
+    default:         on = ((t / 100) % 2 == 0);                  break;
   }
   digitalWrite(STATUS_LED_PIN, on ? HIGH : LOW);
 }

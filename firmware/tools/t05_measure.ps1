@@ -1,5 +1,4 @@
-# t05_measure.ps1 - do thoi gian tu luc cap nguon lai den khi board phat goi BLE dau tien (T05)
-# Dung dong "# first_tx ms=N" do firmware in ra (N tinh tu luc chip khoi dong).
+# t05_measure.ps1 - do thoi gian tu luc cap nguon den goi BLE dau tien (dong "# first_tx ms=N")
 # Chay: powershell -NoProfile -ExecutionPolicy Bypass -File t05_measure.ps1
 param(
   [string]$Port = "COM8",

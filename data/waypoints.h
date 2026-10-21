@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include <stddef.h>
 
-// Gio bat dau gia lap (Unix, UTC) = thoi diem chay script, trung moc CSV
+// Gio bat dau gia lap (Unix, UTC)
 #define SCENARIO_EPOCH   1792122556UL      // 2026-10-16 03:49:16 UTC
 
 typedef struct {

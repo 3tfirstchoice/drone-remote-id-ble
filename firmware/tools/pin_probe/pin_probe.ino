@@ -1,4 +1,4 @@
-// pin_probe.ino - in so GPIO cua cac nhan D2..D13, A0..A5 (build bang goi board OhStem, xem BOARD_PINS.md)
+// pin_probe.ino - in so GPIO cua cac nhan D2..D13, A0..A5
 void setup() {
   Serial.begin(115200);
   delay(3000);

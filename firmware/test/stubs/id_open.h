@@ -1,5 +1,4 @@
-// id_open.h gia lap: thay lop ID_OpenDrone (can BLE cua ESP32) bang ban ghi lai cac lan goi,
-// de bien dich va test rid_tx.ino tren may tinh. Hang so ODID_* van lay tu opendroneid.h that.
+// id_open.h gia lap: ID_OpenDrone ghi lai cac lan goi thay vi phat BLE
 #pragma once
 #include <Arduino.h>
 #include <time.h>

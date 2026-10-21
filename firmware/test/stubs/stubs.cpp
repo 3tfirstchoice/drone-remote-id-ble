@@ -1,9 +1,9 @@
-// stubs.cpp - dinh nghia cac bien/ham gia lap dung chung cho moi chuong trinh test
+// stubs.cpp - bien va ham gia lap dung chung cho test
 #include <Arduino.h>
 #include <sys/time.h>
 #include "check.h"
 
-// --- khung kiem tra (check.h) ---
+// --- check.h ---
 int g_pass = 0, g_fail = 0;
 
 // --- Arduino.h gia lap ---
@@ -12,12 +12,10 @@ int        stub_pin_level[64] = {0};
 StubSerial Serial, Serial1;
 StubESP    ESP;
 
-// --- bo dem BLE: ban that nam trong libraries/id_open/id_open_esp32.cpp (PATCH #2) ---
+// --- bo dem BLE ---
 uint32_t ble_tx_cnt = 0, ble_err_cnt = 0;
 
-// --- dong ho he thong gia lap ---
-// run_tests.sh doi ten settimeofday/gettimeofday thanh 2 ham duoi day (-D...), nen code firmware
-// khong bao gio dat dong ho that cua may. Dong ho gia lap = gio duoc dat + thoi gian millis() da troi.
+// --- dong ho gia lap: gio da dat + thoi gian millis() da troi ---
 int            stub_settime_calls = 0;
 struct timeval stub_settime_last  = {0, 0};
 static uint32_t stub_settime_ms   = 0;

@@ -1,4 +1,4 @@
-// Arduino.h gia lap toi thieu de bien dich va test code rid_tx tren may tinh (g++), khong can ESP32.
+// Arduino.h gia lap cho test tren may tinh
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
@@ -23,7 +23,7 @@ typedef uint8_t byte;
 #define SERIAL_8N1 0x800001c
 #define SERIAL_7N1 0x8000014
 
-// --- thoi gian & chan, dieu khien duoc tu test ---
+// --- thoi gian va chan ---
 extern uint32_t stub_millis;
 inline uint32_t millis() { return stub_millis; }
 inline void delay(uint32_t ms) { stub_millis += ms; }
@@ -31,12 +31,12 @@ inline void pinMode(int, int) {}
 extern int stub_pin_level[64];
 inline void digitalWrite(int pin, int v) { stub_pin_level[pin] = v; }
 
-// --- UART gia lap: test day byte vao bang feed() ---
+// --- UART gia lap ---
 struct StubSerial {
-  std::string rx;               // du lieu "tu module GPS"
+  std::string rx;               // du lieu nhan, nap bang feed()
   size_t      pos = 0;
   uint32_t    baud = 0, cfg = 0; int rx_pin = -1, tx_pin = -1; size_t rxbuf = 0;
-  std::string out;              // thu tu ra Serial.print
+  std::string out;              // du lieu da in
   void   begin(uint32_t b, uint32_t c = SERIAL_8N1, int r = -1, int t = -1) { baud = b; cfg = c; rx_pin = r; tx_pin = t; }
   size_t setRxBufferSize(size_t n) { rxbuf = n; return n; }
   void   end() {}
@@ -52,4 +52,4 @@ struct StubSerial {
 extern StubSerial Serial, Serial1;
 struct StubESP { uint32_t getFreeHeap() { return 265600; } };
 extern StubESP ESP;
-inline int esp_reset_reason() { return 1; }   // 1 = ESP_RST_POWERON
+inline int esp_reset_reason() { return 1; }

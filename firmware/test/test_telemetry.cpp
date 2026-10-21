@@ -1,4 +1,4 @@
-// test_telemetry.cpp - dong log CSV: giu nguyen dinh dang cu va header/du lieu cung so cot
+// test_telemetry.cpp - test dinh dang log CSV
 #include <Arduino.h>
 #include "check.h"
 #include "telemetry.h"
@@ -17,7 +17,7 @@ static void test_same_output_as_original_printf(void) {
   UTM_data d = sample();
   char got[200], want[200];
   telemetry_format(got, sizeof got, &d, 1, 1, 19446, 105, 0, 265600);
-  // Dinh dang goc cua telemetry_line truoc khi tach ham (fw 0.3.0), giu nguyen tung ky tu
+  // Dinh dang mong doi
   snprintf(want, sizeof want,
     "D,%lu,%04d-%02d-%02dT%02d:%02d:%02dZ,%d,%u,%.7f,%.7f,%.1f,%.1f,%d,%d,%d,%lu,%lu,%lu\n",
     (unsigned long) 19446, d.years, d.months, d.days, d.hours, d.minutes, d.seconds,
@@ -45,7 +45,7 @@ static void test_line_goes_to_serial_without_extra_crlf(void) {
   telemetry_line(&d, -1, 0);
   CHECK(Serial.out.size() > 20);
   CHECK(Serial.out.back() == '\n');
-  CHECK(Serial.out.find("\r") == std::string::npos);   // printf goc chi co '\n'
+  CHECK(Serial.out.find("\r") == std::string::npos);
   CHECK(Serial.out.rfind("D,12345,", 0) == 0);
 }
 
@@ -53,7 +53,7 @@ static void test_buffer_too_small_is_safe(void) {
   UTM_data d = sample();
   char tiny[10];
   telemetry_format(tiny, sizeof tiny, &d, 0, 0, 1, 2, 3, 4);
-  CHECK(strlen(tiny) < sizeof tiny);                    // snprintf luon ket thuc chuoi
+  CHECK(strlen(tiny) < sizeof tiny);
 }
 
 void run_telemetry_tests(void) {

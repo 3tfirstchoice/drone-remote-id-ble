@@ -1,43 +1,31 @@
-// gps_passthrough.ino - kiem tra module GPS M5Stack (AT6668) noi vao board OhStem YOLO UNO.
-// Sketch doc lap (khong dung rid_tx/), nap truoc khi bat USE_GPS 1 trong rid_tx/config.h.
-//
-// Muc dich: xac nhan 3 dieu:
-//   1) day noi dung chua (RX/TX co bi dao khong)
-//   2) baud va dinh dang (8N1 / 7N1) dung chua
-//   3) module da "fix" (dinh vi duoc) chua
-//
-// Cach hoat dong:
-//   Giai doan 1 (~25 giay): thu lan luot cac to hop {chan, baud, dinh dang}. Moi to hop nghe 2.5 giay,
-//                           dem so cau NMEA co checksum DUNG. To hop nao nhieu nhat duoc chon.
-//   Giai doan 2:            giu to hop da chon, in cau NMEA tho (5 giay dau) va 1 dong tom tat moi 2 giay:
-//                           fix, ve_tinh (dung de fix, cau GGA), nhin_thay (anten thay, cau GSV), hdop.
-//
-// Serial Monitor: 115200 baud. Go 'v' de bat/tat in cau tho, go 'r' de do lai tu dau.
-// Chan GPS lay tu BOARD_PINS.md: D3 = GPIO6 (ESP32 nhan), D4 = GPIO7 (ESP32 gui) - trung config.h.
+// gps_passthrough.ino - kiem tra module GPS: do chan RX/TX, baud, dinh dang UART va trang thai fix
+// Giai doan 1: thu cac to hop cau hinh, chon to hop co nhieu cau NMEA dung nhat.
+// Giai doan 2: in cau NMEA tho va dong tom tat moi 2 giay.
+// Serial 115200: 'v' bat/tat in cau tho, 'r' do lai.
 
 #include <Arduino.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define GPS_RX_PIN   6      // D3: ESP32 nhan <- TX cua module GPS
-#define GPS_TX_PIN   7      // D4: ESP32 gui  -> RX cua module GPS
-#define PROBE_MS     2500   // thoi gian nghe moi to hop
+#define GPS_RX_PIN   6      // D3, noi TX cua GPS
+#define GPS_TX_PIN   7      // D4, noi RX cua GPS
+#define PROBE_MS     2500   // thoi gian nghe moi to hop (ms)
 #define LINE_MAX     120    // do dai toi da 1 cau NMEA
 
 struct Combo { uint32_t baud; uint32_t cfg; const char *name; };
 
-// Thu to hop co kha nang cao nhat truoc
+// Cac to hop cau hinh, thu theo thu tu
 static const Combo COMBOS[] = {
-  { 115200, SERIAL_8N1, "115200 8N1" },   // mac dinh cua Unit GPS v1.1 (AT6668)
-  { 115200, SERIAL_7N1, "115200 7N1" },   // mot so khach bao 7N1
-  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh cua module doi truoc (AT6558, NEO-6M)
+  { 115200, SERIAL_8N1, "115200 8N1" },   // mac dinh M5Stack GPS/BDS Unit v1.1
+  { 115200, SERIAL_7N1, "115200 7N1" },
+  {   9600, SERIAL_8N1, "9600 8N1"   },   // mac dinh AT6558, NEO-6M
   {  38400, SERIAL_8N1, "38400 8N1"  },
   {   9600, SERIAL_7N1, "9600 7N1"   },
 };
 static const int N_COMBO = sizeof(COMBOS) / sizeof(COMBOS[0]);
 
 // ---------------------------------------------------------------- NMEA co ban
-// Cau hop le: $<noi dung>*HH, HH = XOR cua moi ky tu giua '$' va '*' (2 chu so hex).
+// true neu cau co dang $...*HH voi checksum HH dung
 static int hexval(char c) {
   if (c >= '0' && c <= '9') return c - '0';
   if (c >= 'A' && c <= 'F') return c - 'A' + 10;
@@ -56,7 +44,7 @@ static bool nmea_valid(const char *s) {
   return x == (uint8_t) (h1 * 16 + h2);
 }
 
-// Lay truong thu n (0 = "$GNGGA") cua cau, chep vao out. Tra false neu khong co.
+// Chep truong thu n (0 = ten cau) vao out, tra ve false neu khong co
 static bool nmea_field(const char *s, int n, char *out, size_t outsz) {
   const char *p = s;
   for (int i = 0; i < n; i++) {
@@ -70,7 +58,7 @@ static bool nmea_field(const char *s, int n, char *out, size_t outsz) {
   return true;
 }
 
-// "ddmm.mmmm" (+ N/S/E/W) -> do thap phan. deg_digits = 2 (vi do) hoac 3 (kinh do).
+// "ddmm.mmmm" + N/S/E/W -> do thap phan; deg_digits = 2 (vi do) hoac 3 (kinh do)
 static double nmea_deg(const char *f, char hemi, int deg_digits) {
   if (strlen(f) < (size_t) deg_digits + 1) return 0.0;
   char d[4] = {0};
@@ -79,36 +67,36 @@ static double nmea_deg(const char *f, char hemi, int deg_digits) {
   return (hemi == 'S' || hemi == 'W') ? -v : v;
 }
 
-// Gom ky tu UART thanh tung dong. push() tra ve true khi vua xong 1 dong (nam trong buf).
+// Gom ky tu UART thanh dong; push() tra ve true khi buf chua 1 dong hoan chinh
 struct LineReader {
   char   buf[LINE_MAX];
   size_t n = 0;
   bool push(char ch) {
     if (ch == '\n' || ch == '\r') {
-      if (n == 0) return false;          // \r\n: dong rong thu hai, bo qua
+      if (n == 0) return false;
       buf[n] = 0;
       n = 0;
       return true;
     }
     if (n + 1 < sizeof(buf)) buf[n++] = ch;
-    else n = 0;                          // cau qua dai: bo
+    else n = 0;                          // bo cau qua dai
     return false;
   }
 };
 
 // ---------------------------------------------------------------- trang thai
-static int  chosen = -1;            // to hop duoc chon
-static bool swapped = false;        // true neu phai dao chan RX/TX
+static int  chosen = -1;            // chi so to hop da chon
+static bool swapped = false;        // true neu dao chan RX/TX
 static bool verbose = true;
 static uint32_t lock_ms = 0, last_sum = 0;
-static LineReader reader;           // dung o giai doan 2
+static LineReader reader;
 
-// Ban tin GGA moi nhat
+// Gia tri tu cau GGA moi nhat
 static int     g_fix = 0, g_sats = 0;
 static char    g_hdop[12] = "", g_alt[12] = "";
 static double  g_lat = 0, g_lon = 0;
 static uint32_t n_valid = 0, n_bad = 0;
-// GSV = ve tinh "nhin thay" theo tung he (GP=GPS, BD/GB=BeiDou, GL=GLONASS, GA=Galileo)
+// So ve tinh nhin thay theo tung he ve tinh (cau GSV)
 static const int MAX_TALKER = 6;
 static char     gsv_talker[MAX_TALKER][3];
 static int      gsv_inview[MAX_TALKER];
@@ -130,7 +118,7 @@ static void gps_open(const Combo &c, bool swap) {
   Serial1.begin(c.baud, c.cfg, rx, tx);
 }
 
-// Nghe ms mili giay, dem byte va cau hop le/khong hop le.
+// Nghe trong ms mili giay, dem so byte, so cau dung va sai
 static void probe(const Combo &c, bool swap, uint32_t ms, uint32_t &bytes, uint32_t &ok, uint32_t &bad) {
   gps_open(c, swap);
   bytes = ok = bad = 0;
@@ -192,8 +180,7 @@ static void handle_sentence(const char *s) {
   n_valid++;
   if (verbose && millis() - lock_ms < 5000) Serial.println(s);
 
-  // $GNGGA hoac $GPGGA: truong 2 = vi do, 3 = N/S, 4 = kinh do, 5 = E/W,
-  //                     6 = chat luong fix, 7 = so ve tinh, 8 = hdop, 9 = do cao MSL
+  // GGA: 2 vi do, 3 N/S, 4 kinh do, 5 E/W, 6 chat luong fix, 7 so ve tinh, 8 hdop, 9 do cao MSL
   if (strncmp(s + 3, "GGA", 3) == 0) {
     char f[16];
     if (nmea_field(s, 6, f, sizeof f)) g_fix  = atoi(f);
@@ -207,14 +194,14 @@ static void handle_sentence(const char *s) {
       g_lon = nmea_deg(lon, ew[0], 3);
     }
   }
-  // $GxGSV: truong 3 = tong so ve tinh nhin thay cua he x (de biet anten co thay troi hay khong)
+  // GSV: truong 3 = so ve tinh nhin thay
   if (strncmp(s + 3, "GSV", 3) == 0) {
     char f[8];
     if (!nmea_field(s, 3, f, sizeof f)) return;
     int slot = -1;
     for (int i = 0; i < MAX_TALKER; i++) {
-      if (gsv_talker[i][0] == 0 && slot < 0) slot = i;                    // o trong dau tien
-      if (strncmp(gsv_talker[i], s + 1, 2) == 0) { slot = i; break; }     // da co he nay
+      if (gsv_talker[i][0] == 0 && slot < 0) slot = i;
+      if (strncmp(gsv_talker[i], s + 1, 2) == 0) { slot = i; break; }
     }
     if (slot >= 0) { memcpy(gsv_talker[slot], s + 1, 2); gsv_talker[slot][2] = 0; gsv_inview[slot] = atoi(f); }
   }
@@ -238,7 +225,7 @@ static void print_summary(void) {
 void setup() {
   Serial.begin(115200);
   uint32_t t0 = millis();
-  while (!Serial && millis() - t0 < 3000) { delay(10); }   // USB native: cho may tinh mo cong COM
+  while (!Serial && millis() - t0 < 3000) { delay(10); }   // cho cong USB toi da 3 s
   delay(500);
   Serial.println("# gps_passthrough: kiem tra module GPS");
   run_detection();

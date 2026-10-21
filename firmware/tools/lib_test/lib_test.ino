@@ -1,4 +1,4 @@
-// lib_test.ino - kiem tra thu vien id_open bien dich va khoi tao BLE duoc tren S3
+// lib_test.ino - kiem tra bien dich thu vien id_open va khoi tao BLE
 #include "id_open.h"
 
 ID_OpenDrone   squitter;

@@ -1,9 +1,8 @@
-// telemetry.cpp - dinh dang: H,... (header) va D,... (du lieu)
+// telemetry.cpp - log CSV qua Serial
 #include "telemetry.h"
 #include "ble_stats.h"
 
-// Ten cot dat MOT cho. Moi lan them/bot cot phai sua dong printf trong telemetry_format;
-// firmware/test/test_telemetry.cpp kiem tra so cot cua header va dong du lieu bang nhau.
+// Ten cot, phai khop thu tu voi telemetry_format
 #define TELEMETRY_COLUMNS "ms,utc,scn,idx,lat,lon,alt_msl,alt_agl,speed_kn,heading,sats,tx,err,heap"
 
 void telemetry_header(void) {

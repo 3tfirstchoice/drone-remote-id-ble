@@ -1,4 +1,4 @@
-// first_packet.ino - phat Remote ID tinh (T01), ESP32-S3, BLE Legacy Advertising
+// first_packet.ino - phat Remote ID voi vi tri co dinh qua BLE Legacy Advertising
 #include "id_open.h"
 
 #define UAV_ID         "LAB-ESP32-0001"
@@ -14,7 +14,7 @@ UTM_parameters utm_parameters;
 UTM_data       utm_data;
 static char    dop_str[] = "1.0";
 
-extern uint32_t ble_tx_cnt, ble_err_cnt;   // PATCH #2
+extern uint32_t ble_tx_cnt, ble_err_cnt;
 
 static void fill_time(UTM_data *d) {
   struct timeval tv;
@@ -28,10 +28,10 @@ static void fill_time(UTM_data *d) {
 
 void setup() {
   Serial.begin(115200);
-  delay(3000);                                   // USB native: cho may tinh nhan cong
+  delay(3000);                                   // cho cong USB san sang
   Serial.println("# first_packet boot");
 
-  struct timeval tv = { (time_t) EPOCH_UTC, 0 }; // khong co gio thi System timestamp khong cap nhat
+  struct timeval tv = { (time_t) EPOCH_UTC, 0 };
   settimeofday(&tv, NULL);
 
   memset(&utm_parameters, 0, sizeof(utm_parameters));
@@ -50,9 +50,9 @@ void setup() {
   utm_data.alt_agl_m   = 0.0f;
   utm_data.speed_kn    = 0;
   utm_data.heading     = 0;
-  utm_data.satellites  = 10;                     // BAT BUOC >= 7, neu khong vi tri bi chan
+  utm_data.satellites  = 10;                     // >= 7 de phat Location
   utm_data.hdop_s = utm_data.vdop_s = dop_str;
-  utm_data.base_latitude  = HOME_LAT;            // vi tri nguoi dieu khien (ghi 1 lan)
+  utm_data.base_latitude  = HOME_LAT;            // vi tri nguoi dieu khien
   utm_data.base_longitude = HOME_LON;
   utm_data.base_alt_m     = HOME_ALT_MSL;
   utm_data.base_valid     = 1;
@@ -61,12 +61,12 @@ void setup() {
 
 void loop() {
   static uint32_t last = millis();
-  if (millis() - last >= 1000) {                 // 1 Hz, khong dung delay
+  if (millis() - last >= 1000) {                 // 1 Hz
     last += 1000;
     fill_time(&utm_data);
     Serial.printf("%lu,%.7f,%.7f,tx=%lu,err=%lu\n", millis(),
                   utm_data.latitude_d, utm_data.longitude_d,
                   (unsigned long) ble_tx_cnt, (unsigned long) ble_err_cnt);
   }
-  squitter.transmit(&utm_data);                  // goi lien tuc, khong delay
+  squitter.transmit(&utm_data);
 }

@@ -1,48 +1,42 @@
-// config.h - moi hang so cua firmware rid_tx dat o day
+// config.h - hang so cau hinh cua firmware rid_tx
 #pragma once
 
 #define FW_VERSION       "0.4.3"
 
-// --- Nguon du lieu: 0 = gia lap tu waypoints.h, 1 = GPS that (giai doan 2) ---
-// USE_GPS 1 can thu vien "TinyGPSPlus" (Mikal Hart): Arduino IDE > Library Manager.
-// Co the ghi de khi bien dich: -DUSE_GPS=1 (dung cho test tren may tinh).
+// --- Nguon du lieu: 0 = gia lap (waypoints.h), 1 = GPS that (can thu vien TinyGPSPlus) ---
 #ifndef USE_GPS
 #define USE_GPS          0
 #endif
 
 // --- Dinh danh ---
 #define UAV_ID           "LAB-ESP32-0001"
-// Operator ID gia. Drone Scanner bao "invalid" cho moi ID gia, ke ca dinh dang so dang ky EU (da thu), xem CHANGELOG fw-v0.4.3.
 #define OPERATOR_ID      "LAB-OPERATOR-01"
 #define SELF_ID_TEXT     "LAB SIMULATION"
 
-// --- Vi tri nguoi dieu khien (home) ---
-// Che do gia lap dung 3 hang so nay. Che do GPS lay home tu lan fix dau tien (gps_home).
+// --- Vi tri nguoi dieu khien (home), dung o che do gia lap ---
 #define HOME_LAT         10.7725
 #define HOME_LON         106.6578
 #define HOME_ALT_MSL     10.0f
-// SCENARIO_EPOCH (gio bat dau gia lap) nam trong waypoints.h, do data/generate_mock_data.py sinh
 
 // --- Nhip va thoi gian ---
-#define DATA_PERIOD_MS   1000              // cap nhat du lieu + in log 1 Hz
-#define BOOT_DELAY_MS    500               // USB native: cho may tinh nhan cong COM
-#define MOCK_SATS        10                // phai >= 7, neu khong thu vien khong phat Location
-#define FIRST_TX_WARN_MS 5000              // qua muc nay ma chua co goi BLE nao thi in canh bao
+#define DATA_PERIOD_MS   1000              // chu ky cap nhat du lieu va in log (ms)
+#define BOOT_DELAY_MS    500               // cho cong USB san sang (ms)
+#define MOCK_SATS        10                // so ve tinh gia lap, >= 7
+#define FIRST_TX_WARN_MS 5000              // nguong canh bao chua phat duoc goi BLE (ms)
 
-// --- Chan (xem BOARD_PINS.md) ---
-#define STATUS_LED_PIN   48                // D13, den xanh la, sang khi HIGH
-#define GPS_RX_PIN       6                 // D3: ESP32 nhan <- TX cua GPS
-#define GPS_TX_PIN       7                 // D4: ESP32 gui  -> RX cua GPS (firmware khong gui lenh nao)
+// --- Chan ---
+#define STATUS_LED_PIN   48                // D13, LED xanh, sang khi HIGH
+#define GPS_RX_PIN       6                 // D3, noi TX cua GPS
+#define GPS_TX_PIN       7                 // D4, noi RX cua GPS
 
-// --- GPS: M5Stack GPS/BDS Unit v1.1 (AT6668), UART mac dinh 115200 8N1 ---
-// Dung tools/gps_passthrough de xac nhan baud/dinh dang truoc khi doi cac gia tri nay.
+// --- GPS (M5Stack GPS/BDS Unit v1.1) ---
 #define GPS_BAUD          115200
-#define GPS_UART_7N1      0                // 1 neu gps_passthrough bao module chay 7N1
-#define GPS_FIX_MAX_AGE_MS  2000           // du lieu GPS cu hon muc nay coi nhu mat fix
-#define GPS_CLOCK_SYNC_MS   60000          // dong bo lai dong ho he thong theo gio GPS moi 60 giay
-#define GPS_MIN_SPEED_KN    1              // cham hon muc nay thi giu huong cu (huong GPS khong tin cay)
+#define GPS_UART_7N1      0                // 1: UART 7N1, 0: UART 8N1
+#define GPS_FIX_MAX_AGE_MS  2000           // du lieu cu hon muc nay coi nhu mat fix (ms)
+#define GPS_CLOCK_SYNC_MS   60000          // chu ky dong bo dong ho theo gio GPS (ms)
+#define GPS_MIN_SPEED_KN    1              // duoi muc nay giu huong cu (kn)
 
-// --- Kiem tra cau hinh luc bien dich (sai thi bao loi ngay, khong cho nap) ---
+// --- Kiem tra cau hinh luc bien dich ---
 static_assert(sizeof(UAV_ID) > 1,      "UAV_ID khong duoc rong");
 static_assert(sizeof(OPERATOR_ID) > 1, "OPERATOR_ID khong duoc rong");
 static_assert(sizeof(UAV_ID) - 1      <= 20, "UAV_ID toi da 20 ky tu (ODID_ID_SIZE)");

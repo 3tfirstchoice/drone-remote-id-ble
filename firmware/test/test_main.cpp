@@ -1,4 +1,4 @@
-// test_main.cpp - diem vao cua test tung module (xem run_tests.sh)
+// test_main.cpp - chay test tung module
 #include "check.h"
 
 void run_gps_source_tests(void);

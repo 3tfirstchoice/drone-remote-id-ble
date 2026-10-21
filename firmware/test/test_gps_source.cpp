@@ -1,4 +1,4 @@
-// test_gps_source.cpp - gps_source.cpp voi TinyGPSPlus that va cau NMEA gia lap
+// test_gps_source.cpp - test gps_source voi cau NMEA gia lap
 #include <Arduino.h>
 #include <time.h>
 #include <sys/time.h>
@@ -7,7 +7,7 @@
 #include "gps_source.h"
 #include "config.h"
 
-void gps_test_reset(void);   // gps_source.cpp, chi co khi -DGPS_SOURCE_TESTING
+void gps_test_reset(void);
 
 static void feed_and_poll(const std::string &s) { Serial1.feed(s); gps_poll(); }
 
@@ -45,7 +45,7 @@ static void test_no_fix_sentences(void) {
   feed_and_poll(gga(0, 0, "", "") + rmc('V', "", ""));
   CHECK(!gps_step(&d));
   CHECK(d.satellites == 0);
-  CHECK(stub_settime_calls == 0);   // chua fix thi khong duoc dat dong ho theo gio rac cua module
+  CHECK(stub_settime_calls == 0);
   double la, lo; float al;
   CHECK(!gps_home(&la, &lo, &al));
 }
@@ -58,9 +58,9 @@ static void test_fix_fills_utm_data(void) {
   CHECK_NEAR(d.latitude_d, 10.7725, 1e-9);
   CHECK_NEAR(d.longitude_d, 106.6578, 1e-9);
   CHECK_NEAR(d.alt_msl_m, 10.0, 1e-4);
-  CHECK_NEAR(d.alt_agl_m, 0.0, 1e-4);    // fix dau tien = home -> do cao tuong doi 0
+  CHECK_NEAR(d.alt_agl_m, 0.0, 1e-4);
   CHECK(d.satellites == 10);
-  CHECK(d.speed_kn == 5);                // 5.14 kn lam tron 5
+  CHECK(d.speed_kn == 5);
   CHECK(d.heading == 90);
 
   double la = 0, lo = 0; float al = 0;
@@ -79,10 +79,10 @@ static void test_agl_relative_to_first_fix(void) {
   feed_and_poll(gga(1, 9, "1.0", "60.5", "030001.000") + rmc('A', "0.0", "0.0", "030001.000"));
   CHECK(gps_step(&d));
   CHECK_NEAR(d.alt_msl_m, 60.5, 1e-4);
-  CHECK_NEAR(d.alt_agl_m, 50.5, 1e-4);   // 60.5 - 10.0 cua diem home
+  CHECK_NEAR(d.alt_agl_m, 50.5, 1e-4);
   double la, lo; float al;
   CHECK(gps_home(&la, &lo, &al));
-  CHECK_NEAR(al, 10.0, 1e-4);            // home khong doi theo thoi gian
+  CHECK_NEAR(al, 10.0, 1e-4);
 }
 
 static void test_heading_held_when_slow(void) {
@@ -95,11 +95,11 @@ static void test_heading_held_when_slow(void) {
   feed_and_poll(gga(1, 10, "0.9", "10.0", "030001.000") + rmc('A', "0.2", "270.0", "030001.000"));
   CHECK(gps_step(&d));
   CHECK(d.speed_kn == 0);
-  CHECK(d.heading == 90);                // dung yen: huong GPS nhieu -> giu huong cu
+  CHECK(d.heading == 90);
   stub_millis += 1000;
   feed_and_poll(gga(1, 10, "0.9", "10.0", "030002.000") + rmc('A', "4.0", "359.6", "030002.000"));
   CHECK(gps_step(&d));
-  CHECK(d.heading == 0);                 // 359.6 lam tron 360 -> phai ve 0, khong duoc ra 360
+  CHECK(d.heading == 0);
 }
 
 static void test_fix_lost_after_timeout(void) {
@@ -107,12 +107,12 @@ static void test_fix_lost_after_timeout(void) {
   UTM_data d; memset(&d, 0, sizeof d);
   feed_and_poll(gga(1, 10, "0.9", "10.0") + rmc('A', "5.0", "90.0"));
   CHECK(gps_step(&d));
-  stub_millis += GPS_FIX_MAX_AGE_MS + 500;   // khong con cau moi
+  stub_millis += GPS_FIX_MAX_AGE_MS + 500;
   CHECK(!gps_step(&d));
-  CHECK(d.satellites == 0);                  // de thu vien phat Location voi trang thai loi
-  CHECK_NEAR(d.latitude_d, 10.7725, 1e-9);   // toa do cu giu nguyen (khong bi xoa ve 0)
+  CHECK(d.satellites == 0);
+  CHECK_NEAR(d.latitude_d, 10.7725, 1e-9);
   double la, lo; float al;
-  CHECK(gps_home(&la, &lo, &al));            // home da co van giu nguyen
+  CHECK(gps_home(&la, &lo, &al));
   CHECK_NEAR(la, 10.7725, 1e-9);
 }
 
@@ -120,10 +120,10 @@ static void test_too_few_satellites(void) {
   reset();
   UTM_data d; memset(&d, 0, sizeof d);
   feed_and_poll(gga(1, 5, "3.5", "10.0") + rmc('A', "0.0", "0.0"));
-  CHECK(!gps_step(&d));                      // 5 < SATS_LEVEL_2 (7)
+  CHECK(!gps_step(&d));
   CHECK(d.satellites == 5);
   double la, lo; float al;
-  CHECK(!gps_home(&la, &lo, &al));           // chua du ve tinh thi chua chot home
+  CHECK(!gps_home(&la, &lo, &al));
   stub_millis += 1000;
   feed_and_poll(gga(1, 8, "1.2", "11.0", "030001.000") + rmc('A', "0.0", "0.0", "030001.000"));
   CHECK(gps_step(&d));
@@ -135,31 +135,31 @@ static void test_bad_checksum_ignored(void) {
   reset();
   UTM_data d; memset(&d, 0, sizeof d);
   std::string bad = gga(1, 10, "0.9", "10.0");
-  bad[bad.size() - 5] = (bad[bad.size() - 5] == '0') ? '1' : '0';   // pha hong 1 ky tu checksum
+  bad[bad.size() - 5] = (bad[bad.size() - 5] == '0') ? '1' : '0';
   feed_and_poll(bad + rmc('A', "5.0", "90.0"));
-  CHECK(!gps_step(&d));                      // RMC co fix nhung GGA hong -> chua co do cao hop le
+  CHECK(!gps_step(&d));
 }
 
 static void test_clock_sync(void) {
   reset();
   UTM_data d; memset(&d, 0, sizeof d);
   feed_and_poll(gga(1, 10, "0.9", "10.0") + rmc('A', "5.0", "90.0"));
-  stub_millis += 300;                        // cau da nhan duoc 300 ms truoc luc goi gps_step
+  stub_millis += 300;
   CHECK(gps_step(&d));
   CHECK(stub_settime_calls == 1);
-  // 2026-10-20 03:00:00 UTC = 1792465200 (doi chieu bang timegm cua libc)
+  // 2026-10-20 03:00:00 UTC
   struct tm t; memset(&t, 0, sizeof t);
   t.tm_year = 2026 - 1900; t.tm_mon = 9; t.tm_mday = 20; t.tm_hour = 3;
   CHECK((long long) stub_settime_last.tv_sec == (long long) timegm(&t));
   CHECK((long long) stub_settime_last.tv_sec == 1792465200LL);
-  CHECK(stub_settime_last.tv_usec >= 290000 && stub_settime_last.tv_usec <= 310000);  // bu 300 ms tre
+  CHECK(stub_settime_last.tv_usec >= 290000 && stub_settime_last.tv_usec <= 310000);
 
-  // trong 60 giay khong dong bo lai
+  // chua dong bo lai trong GPS_CLOCK_SYNC_MS
   stub_millis += 1000;
   feed_and_poll(gga(1, 10, "0.9", "10.0", "030001.000") + rmc('A', "5.0", "90.0", "030001.000"));
   CHECK(gps_step(&d));
   CHECK(stub_settime_calls == 1);
-  // sau 60 giay thi dong bo lai
+  // dong bo lai sau GPS_CLOCK_SYNC_MS
   stub_millis += GPS_CLOCK_SYNC_MS;
   feed_and_poll(gga(1, 10, "0.9", "10.0", "030101.000") + rmc('A', "5.0", "90.0", "030101.000"));
   CHECK(gps_step(&d));

@@ -1,4 +1,4 @@
-// test_mock_waypoints.cpp - waypoints.h (do data/generate_mock_data.py sinh) + mock_source.cpp
+// test_mock_waypoints.cpp - test waypoints.h va mock_source
 #include <Arduino.h>
 #include "check.h"
 #include "config.h"
@@ -12,7 +12,7 @@ static void check_ranges(const waypoint_t (&w)[N]) {
   for (size_t i = 0; i < N; i++) {
     CHECK(w[i].lat_e7 >= -900000000 && w[i].lat_e7 <= 900000000);
     CHECK(w[i].lon_e7 >= -1800000000 && w[i].lon_e7 <= 1800000000);
-    CHECK(w[i].alt_msl_dm % 5 == 0 && w[i].alt_agl_dm % 5 == 0);   // buoc 0.5 m cua OpenDroneID
+    CHECK(w[i].alt_msl_dm % 5 == 0 && w[i].alt_agl_dm % 5 == 0);   // boi so 0.5 m
     CHECK(w[i].alt_msl_dm == w[i].alt_agl_dm + (int) (HOME_ALT_MSL * 10));
     CHECK(w[i].heading_deg < 360);
   }
@@ -51,7 +51,7 @@ static void test_straight_north(void) {
     CHECK(WP_STRAIGHT[i].speed_kn == 10);
     if (i) {
       long step = WP_STRAIGHT[i].lat_e7 - WP_STRAIGHT[i - 1].lat_e7;
-      CHECK(step >= 460 && step <= 464);                    // 5.144 m/giay = 462 don vi 1e-7 do
+      CHECK(step >= 460 && step <= 464);                    // ~462 x 1e-7 do moi giay
     }
   }
 }
@@ -59,7 +59,7 @@ static void test_straight_north(void) {
 static void test_rectangle_legs_and_closure(void) {
   const int heading[4] = {90, 0, 270, 180};
   for (size_t i = 0; i < WP_RECTANGLE_LEN; i++) CHECK(WP_RECTANGLE[i].heading_deg == heading[i / 10]);
-  // cung 1 buoc nhay: tu diem cuoi quay ve diem dau bang buoc giua 2 diem tren canh cuoi
+  // buoc tu diem cuoi ve diem 0 bang buoc tren canh cuoi
   long step_leg  = WP_RECTANGLE[38].lat_e7 - WP_RECTANGLE[39].lat_e7;
   long step_back = WP_RECTANGLE[39].lat_e7 - WP_RECTANGLE[0].lat_e7;
   CHECK(labs(step_leg - step_back) <= 1);
@@ -77,9 +77,9 @@ static void test_mock_straight_stops_at_end(void) {
     mock_step(&d);
     CHECK(d.speed_kn == 10);
   }
-  CHECK(mock_index() == 29);                                // dung o diem cuoi
+  CHECK(mock_index() == 29);
   mock_step(&d);
-  CHECK(d.speed_kn == 0);                                   // het kich ban: dung yen
+  CHECK(d.speed_kn == 0);
   CHECK_NEAR(d.latitude_d, WP_STRAIGHT[29].lat_e7 / 1e7, 1e-9);
   mock_step(&d);
   CHECK(d.speed_kn == 0);
@@ -91,7 +91,7 @@ static void test_mock_rectangle_loops(void) {
   mock_select(2);
   UTM_data d; memset(&d, 0, sizeof d);
   for (int i = 0; i < 40; i++) mock_step(&d);
-  CHECK(mock_index() == 0);                                 // vong 2 bat dau lai tu diem 0
+  CHECK(mock_index() == 0);
   mock_step(&d);
   CHECK_NEAR(d.latitude_d, WP_RECTANGLE[0].lat_e7 / 1e7, 1e-9);
   CHECK(d.heading == 90);
@@ -101,7 +101,7 @@ static void test_mock_converts_units(void) {
   mock_select(1);
   UTM_data d; memset(&d, 0, sizeof d);
   mock_step(&d);
-  mock_step(&d);                                            // diem 1: {107725462, 1066578000, 600, 500, 10, 0}
+  mock_step(&d);
   CHECK_NEAR(d.latitude_d, 10.7725462, 1e-9);
   CHECK_NEAR(d.longitude_d, 106.6578, 1e-9);
   CHECK_NEAR(d.alt_msl_m, 60.0, 1e-4);

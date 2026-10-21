@@ -1,15 +1,6 @@
 #!/usr/bin/env python3
-# generate_mock_data.py - Task 2: sinh du lieu gia lap cho 3 kich ban bay
-#
-# Tu MOT nguon du lieu, script xuat dong thoi:
-#   - data/stationary.csv, data/straight_line.csv, data/rectangle.csv  (cho kiem thu)
-#   - data/waypoints.h va firmware/rid_tx/waypoints.h                  (cho firmware)
-# va kiem tra sai so luong tu hoa khi firmware ma hoa du lieu theo OpenDroneID.
-#
-# Cach dung (tu thu muc goc repo):  python data/generate_mock_data.py
-# Moc thoi gian = thoi diem chay script (UTC, lam tron xuong giay). Sau moi lan chay
-# phai nap lai firmware de SCENARIO_EPOCH trong waypoints.h khop voi CSV.
-# Chi dung thu vien chuan cua Python.
+# generate_mock_data.py - sinh du lieu gia lap 3 kich ban bay: 3 file CSV va waypoints.h
+# Cach dung (tu thu muc goc repo): python data/generate_mock_data.py
 
 import csv
 import math
@@ -20,32 +11,32 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-# --- Duong dan (tinh tu vi tri file script) ---
+# --- Duong dan ---
 DATA_DIR = Path(__file__).resolve().parent
 REPO_DIR = DATA_DIR.parent
 FW_HEADER = REPO_DIR / "firmware" / "rid_tx" / "waypoints.h"
 FW_CONFIG = REPO_DIR / "firmware" / "rid_tx" / "config.h"
 
-# --- Tham so mo phong (phai trung config.h cua firmware, script tu kiem tra) ---
-HOME_LAT = 10.7725        # do, WGS84 - khuon vien DH Bach Khoa TP.HCM
+# --- Tham so mo phong (phai trung firmware/rid_tx/config.h) ---
+HOME_LAT = 10.7725        # do, WGS84
 HOME_LON = 106.6578       # do, WGS84
-ALT_MSL_HOME_M = 10.0     # do cao diem cat canh so voi muc nuoc bien (m)
-ALT_AGL_M = 50.0          # bay cao 50 m so voi diem cat canh
-SPEED_KN = 10             # 10 kn = 5.144 m/s
-KN_TO_MS = 0.514444       # 1 knot = 0.514444 m/s (cung he so firmware dung)
+ALT_MSL_HOME_M = 10.0     # do cao MSL cua home (m)
+ALT_AGL_M = 50.0          # do cao bay so voi home (m)
+SPEED_KN = 10             # toc do bay (kn)
+KN_TO_MS = 0.514444       # m/s tren 1 kn
 SPEED_MS = SPEED_KN * KN_TO_MS
-MOCK_SATS = 10            # so ve tinh gia lap, firmware can >= 7 de phat Location
+MOCK_SATS = 10            # so ve tinh gia lap
 M_PER_DEG_LAT = 111320.0
 M_PER_DEG_LON = 111320.0 * math.cos(math.radians(HOME_LAT))
 
-# Ma kich ban, trung cot scn trong log Serial cua firmware (mock_source.cpp)
+# Ma kich ban (cot scn)
 SCN_STATIONARY, SCN_STRAIGHT, SCN_RECTANGLE = 0, 1, 2
 
-# Do phan giai ma hoa cua OpenDroneID (opendroneid.c)
-LATLON_STEP_DEG = 1e-7    # lat/lon: so nguyen int32, don vi 1e-7 do
-ALT_STEP_M = 0.5          # do cao: uint16, buoc 0.5 m, goc -1000 m
-SPEED_STEP_MS = 0.25      # toc do ngang: uint8, buoc 0.25 m/s (duoi 63.75 m/s)
-LATLON_LIMIT_DEG = 1e-6   # tieu chi T01 trong AeroDrone.pdf: sai lech toa do < 1e-6 do
+# Buoc ma hoa cua OpenDroneID
+LATLON_STEP_DEG = 1e-7    # do
+ALT_STEP_M = 0.5          # m
+SPEED_STEP_MS = 0.25      # m/s
+LATLON_LIMIT_DEG = 1e-6   # nguong sai so toa do T01 (do)
 
 CSV_HEADER = ["utc", "scn", "idx", "lat", "lon", "alt_msl", "alt_agl",
               "speed_kn", "heading", "sats"]
@@ -53,22 +44,22 @@ CSV_HEADER = ["utc", "scn", "idx", "lat", "lon", "alt_msl", "alt_agl",
 
 # ---------------------------------------------------------------- kich ban
 def raw_pt(lat, lon, speed, heading):
-    """Diem goc truoc khi lam tron (gia tri thuc do script tinh)."""
+    """Diem goc truoc khi lam tron."""
     return {"lat": lat, "lon": lon,
             "alt_msl": ALT_MSL_HOME_M + ALT_AGL_M, "alt_agl": ALT_AGL_M,
             "speed_kn": speed, "heading": heading}
 
 
-def stationary():          # 60 giay dung yen tai home
+def stationary():          # 60 diem dung yen tai home
     return [raw_pt(HOME_LAT, HOME_LON, 0, 0) for _ in range(60)]
 
 
-def straight():            # 30 giay bay huong Bac, 10 kn
+def straight():            # 30 diem bay huong Bac
     d = SPEED_MS / M_PER_DEG_LAT
     return [raw_pt(HOME_LAT + i * d, HOME_LON, SPEED_KN, 0) for i in range(30)]
 
 
-def rectangle():           # 4 canh x 10 giay: dong -> bac -> tay -> nam, 40 diem
+def rectangle():           # 40 diem: 4 canh Dong, Bac, Tay, Nam
     dlat = SPEED_MS * 10 / M_PER_DEG_LAT
     dlon = SPEED_MS * 10 / M_PER_DEG_LON
     corners = [(HOME_LAT, HOME_LON),
@@ -84,12 +75,11 @@ def rectangle():           # 4 canh x 10 giay: dong -> bac -> tay -> nam, 40 die
             f = i / 10.0
             out.append(raw_pt(la0 + (la1 - la0) * f, lo0 + (lo1 - lo0) * f,
                               SPEED_KN, headings[leg]))
-    # Khong luu diem thu 41: firmware lap lai tu diem 0 (= diem xuat phat) o giay 40
     return out
 
 
 def to_waypoint(p):
-    """Lam tron ve dang luu trong waypoints.h (lat/lon 1e-7 do, do cao 0.1 m)."""
+    """Lam tron ve dang luu trong waypoints.h."""
     return (round(p["lat"] * 1e7), round(p["lon"] * 1e7),
             round(p["alt_msl"] * 10), round(p["alt_agl"] * 10),
             p["speed_kn"], p["heading"])
@@ -97,7 +87,7 @@ def to_waypoint(p):
 
 # ---------------------------------------------------------------- kiem tra
 def check_config():
-    """Hang so cua script phai trung config.h, neu khong CSV se lech voi firmware."""
+    """Kiem tra hang so cua script trung config.h."""
     if not FW_CONFIG.exists():
         sys.exit("Khong tim thay %s" % FW_CONFIG)
     text = FW_CONFIG.read_text(encoding="utf-8")
@@ -110,14 +100,13 @@ def check_config():
 
 
 def check_waypoints(name, wps, expected_len):
-    """Ton tai trong mien hop le va vua kieu du lieu cua waypoint_t."""
+    """Kiem tra so diem va mien gia tri cua waypoint_t."""
     if len(wps) != expected_len:
         sys.exit("%s: co %d diem, can %d" % (name, len(wps), expected_len))
     for i, (lat, lon, msl, agl, spd, hdg) in enumerate(wps):
         where = "%s[%d]" % (name, i)
         if not -90e7 <= lat <= 90e7 or not -180e7 <= lon <= 180e7:
             sys.exit("%s: lat/lon ngoai mien WGS84" % where)
-        # do cao: int16_t (don vi 0.1 m) va mien OpenDroneID tu -1000 m -> -10000..32767
         if not -10000 <= msl <= 32767 or not -10000 <= agl <= 32767:
             sys.exit("%s: do cao ngoai mien -1000.0..3276.7 m" % where)
         if msl % 5 or agl % 5:
@@ -131,45 +120,42 @@ def check_waypoints(name, wps, expected_len):
 
 
 def check_closed(rect):
-    """Rectangle khep kin: buoc tu diem cuoi ve diem 0 bang buoc giua 2 diem tren canh."""
+    """Kiem tra kich ban hinh chu nhat khep kin."""
     last, first = rect[-1], rect[0]
-    step_back = last[0] - first[0]          # canh Nam: vi do giam dan ve home
-    step_leg = rect[38][0] - rect[39][0]    # buoc giua 2 diem tren canh Nam
+    step_back = last[0] - first[0]
+    step_leg = rect[38][0] - rect[39][0]
     if first[1] != last[1] or abs(step_back - step_leg) > 1:
         sys.exit("rectangle: diem cuoi khong noi ve diem xuat phat")
 
 
 # ---------------------------------------- mo phong ma hoa cua firmware
 def f32(x):
-    """Lam tron so ve float 32 bit nhu tren ESP32."""
+    """Lam tron ve float 32 bit."""
     return struct.unpack("<f", struct.pack("<f", x))[0]
 
 
 def odid_latlon(lat_e7):
-    # mock_source.cpp: latitude_d = lat_e7 / 1e7 (double)
-    # opendroneid.c encodeLatLon: (int64)(LatLon * 10000000) -> cat phan le
+    # Ma hoa roi giai ma lat/lon nhu firmware
     enc = int((lat_e7 / 1e7) * 10000000)
     return enc / 1e7
 
 
 def odid_alt(alt_dm):
-    # mock_source.cpp: alt_m = alt_dm / 10.0f (float)
-    # opendroneid.c encodeAltitude: (int)((Alt + 1000.0f) / 0.5f), giai ma: enc * 0.5 - 1000
+    # Ma hoa roi giai ma do cao nhu firmware
     alt = f32(f32(float(alt_dm)) / f32(10.0))
     enc = int(f32(f32(alt + 1000.0) / 0.5))
     return f32(enc * 0.5) - 1000.0
 
 
 def odid_speed(speed_kn):
-    # id_open.cpp: SpeedHorizontal = 0.514444 * (float) speed_kn
-    # opendroneid.c encodeSpeedHorizontal: (uint8)(Speed / 0.25f) khi Speed <= 63.75
+    # Ma hoa roi giai ma toc do ngang nhu firmware
     v = f32(0.514444 * float(speed_kn))
     enc = int(f32(v / 0.25))
     return enc * 0.25
 
 
 def quantization(scenarios):
-    """Sai so lon nhat giua gia tri goc va gia tri sau khi OpenDroneID ma hoa/giai ma."""
+    """In va kiem tra sai so luong tu hoa lon nhat sau ma hoa OpenDroneID."""
     worst = {"lat/lon (do)": 0.0, "do cao (m)": 0.0, "toc do (m/s)": 0.0}
     for _, raws, wps in scenarios:
         for p, w in zip(raws, wps):
@@ -181,7 +167,6 @@ def quantization(scenarios):
                                       abs(odid_alt(w[3]) - p["alt_agl"]))
             worst["toc do (m/s)"] = max(worst["toc do (m/s)"],
                                         abs(odid_speed(w[4]) - p["speed_kn"] * KN_TO_MS))
-    # Nguong dat: lat/lon theo T01 (sai lech < 1e-6 do); do cao, toc do < 1 buoc ma hoa
     step = {"lat/lon (do)": LATLON_STEP_DEG, "do cao (m)": ALT_STEP_M,
             "toc do (m/s)": SPEED_STEP_MS}
     limit = {"lat/lon (do)": LATLON_LIMIT_DEG, "do cao (m)": ALT_STEP_M,
@@ -205,7 +190,7 @@ def iso(t):
 
 def write_csv(path, scn, wps, epoch, closing_row):
     rows = list(enumerate(wps))
-    if closing_row:                       # rectangle: giay 40 = diem 0 cua vong moi
+    if closing_row:                       # them dong diem 0 o cuoi
         rows.append((0, wps[0]))
     with open(path, "w", newline="", encoding="ascii") as f:
         w = csv.writer(f, lineterminator="\n")
@@ -224,7 +209,7 @@ def header_text(scenarios, epoch):
            "#include <stdint.h>",
            "#include <stddef.h>",
            "",
-           "// Gio bat dau gia lap (Unix, UTC) = thoi diem chay script, trung moc CSV",
+           "// Gio bat dau gia lap (Unix, UTC)",
            "#define SCENARIO_EPOCH   %dUL      // %s" % (epoch, iso(epoch).replace("T", " ").replace("Z", " UTC")),
            "",
            "typedef struct {",

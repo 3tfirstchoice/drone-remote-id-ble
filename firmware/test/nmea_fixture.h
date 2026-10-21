@@ -1,9 +1,9 @@
-// nmea_fixture.h - tao cau NMEA gia lap (co checksum dung) cho test GPS
+// nmea_fixture.h - tao cau NMEA cho test GPS
 #pragma once
 #include <stdio.h>
 #include <string>
 
-// Dong goi "$<body>*HH\r\n", HH = XOR moi ky tu cua body
+// Them $ va checksum vao body
 static inline std::string nmea(const char *body) {
   unsigned x = 0;
   for (const char *p = body; *p; p++) x ^= (unsigned char) *p;
@@ -12,8 +12,7 @@ static inline std::string nmea(const char *body) {
   return std::string("$") + body + tail;
 }
 
-// Toa do HCMUT: 10.7725 N = 10 do 46.3500 phut; 106.6578 E = 106 do 39.4680 phut. Ngay 20/10/2026.
-// quality = 0: chua fix (truong toa do rong)
+// Cau GGA tai 10.7725 N, 106.6578 E; quality = 0: chua fix
 static inline std::string gga(int quality, int sats, const char *hdop, const char *alt,
                               const char *hhmmss = "030000.000") {
   char b[200];
@@ -25,7 +24,7 @@ static inline std::string gga(int quality, int sats, const char *hdop, const cha
   return nmea(b);
 }
 
-// status = 'A': co fix; 'V': chua fix (module van gui ngay gio)
+// Cau RMC ngay 20/10/2026; status 'A': co fix, 'V': chua fix
 static inline std::string rmc(char status, const char *speed_kn, const char *course,
                               const char *hhmmss = "030000.000") {
   char b[200];
