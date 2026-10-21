@@ -57,7 +57,7 @@ static void test_setup(void) {
   char boot[64];
   snprintf(boot, sizeof boot, "# rid_tx boot fw=%s use_gps=%d", FW_VERSION, USE_GPS);
   CHECK(has(boot));
-  CHECK(has("# identity uav=LAB-ESP32-0001 operator=VNM87labtest0001-abc self_id=LAB SIMULATION\n"));
+  CHECK(has("# identity uav=LAB-ESP32-0001 operator=LAB-OPERATOR-01 self_id=LAB SIMULATION\n"));
   CHECK(has("H,ms,utc,scn,idx,lat,lon,alt_msl,alt_agl,speed_kn,heading,sats,tx,err,heap\r\n"));
   CHECK_STR(squitter.params.UAV_id, UAV_ID);
   CHECK_STR(squitter.params.UAS_operator, OPERATOR_ID);

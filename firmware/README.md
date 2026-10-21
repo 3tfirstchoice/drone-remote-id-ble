@@ -125,4 +125,4 @@ Test khong thay the viec nap board that: chua kiem chung bien dich bang Arduino 
 ## Cau hinh va luu y
 
 - `config.h` co static_assert kiem tra ID (toi da 20 ky tu), toa do home, `MOCK_SATS` >= 7: sai thi bao loi luc bien dich.
-- Operator ID: hien tai `VNM87labtest0001-abc`, dinh dang so dang ky EU (3 chu cai quoc gia + 13 ky tu, '-', 3 ky tu bi mat, tong 20), la gia tri gia de thu nghiem. Ban truoc dung `LAB-OPERATOR-01` bi Drone Scanner canh bao khong hop le; byte firmware phat luc do van dung (da test), canh bao den tu viec app kiem tra dinh dang. Chua kiem chung ket qua cua dinh dang moi tren app that; neu app van canh bao, doi `OPERATOR_ID` trong `config.h`.
+- Operator ID `LAB-OPERATOR-01` duoc ma hoa dung (giu nguyen dau gach, da test bang opendroneid.c). Drone Scanner van bao "invalid" o truong Operator ID cho moi ID gia: da thu `VNM87labtest0001-abc` (dinh dang so dang ky EU) va vi du mau `NLD87astrdge12kc-xyz`, deu bi bao. Day la ket qua cua viec app kiem tra dinh danh nguoi dieu khien, khong phai loi firmware va khong anh huong vi tri.

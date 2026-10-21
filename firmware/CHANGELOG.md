@@ -54,3 +54,8 @@
 - `OPERATOR_ID` doi tu `LAB-OPERATOR-01` sang `VNM87labtest0001-abc` (dinh dang so dang ky EU, gia tri gia) de xu ly canh bao Operator ID cua Drone Scanner; chua kiem chung tren app that
 - Test: byte Operator ID du 20 ky tu va co dau '-'
 
+## fw-v0.4.3-operator-id-closed (2026-10-21)
+- Thu 3 gia tri Operator ID tren Drone Scanner (Android): `LAB-OPERATOR-01`, `VNM87labtest0001-abc` (dinh dang so dang ky EU), `NLD87astrdge12kc-xyz` (vi du mau cua co quan hang khong Ha Lan). Ca 3 deu bi bao "invalid data" o truong Operator ID
+- Ket luan: app kiem tra Operator ID chat hon dinh dang; firmware phat dung byte (test voi opendroneid.c). Hoan tac `OPERATOR_ID` ve `LAB-OPERATOR-01`, khong xu ly them
+- Cac truong khac (vi tri, toc do, huong, UAV ID) khong bi anh huong
+
